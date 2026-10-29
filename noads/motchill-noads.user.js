@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Motchill - chặn quảng cáo + tối ưu mạng
 // @namespace    motchill-noads
-// @version      4.1
+// @version      4.2
 // @author       zic
 // @homepageURL  https://github.com/nhattruong16062003/motchill-userscripts/tree/main/noads
 // @updateURL    https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/noads/motchill-noads.user.js
@@ -10,6 +10,7 @@
 // @match        https://motchilltu.com/*
 // @match        https://motchillt.app/*
 // @run-at       document-start
+// @inject-into  page
 // @grant        none
 // ==/UserScript==
 
@@ -137,14 +138,15 @@
   // ============================================================
   //  TIỆN ÍCH CHUNG
   // ============================================================
-  // Thêm CSS vào trang (chờ <head> có sẵn nếu script chạy quá sớm).
+  // Thêm CSS vào trang càng sớm càng tốt: chưa có <head> thì gắn vào <html>,
+  // chưa có cả <html> (script chạy quá sớm) thì đợi trang dựng xong.
   function addStyle(css) {
     const add = () => {
       const style = document.createElement('style');
       style.textContent = css;
-      document.head.appendChild(style);
+      (document.head || document.documentElement).appendChild(style);
     };
-    if (document.head) add();
+    if (document.documentElement) add();
     else document.addEventListener('DOMContentLoaded', add);
   }
 })();

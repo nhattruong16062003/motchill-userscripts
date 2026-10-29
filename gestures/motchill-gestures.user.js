@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Motchill - thao tác trình phát
 // @namespace    motchill-gestures
-// @version      1.1
+// @version      1.2
 // @author       zic
 // @homepageURL  https://github.com/nhattruong16062003/motchill-userscripts/tree/main/gestures
 // @updateURL    https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/gestures/motchill-gestures.user.js
@@ -346,19 +346,21 @@
       const player = playerOf(e.target);
       if (!player || !e.isPrimary) return;
 
-      // Ổ khóa của script: chỉ không cho trình phát thấy, để click vẫn xảy ra.
-      if (lockButtonOf(e.target)) {
-        e.stopImmediatePropagation();
-        return;
-      }
-      if (isJwControl(e.target)) return;
-
+      // Lần chạm thứ 2 trở đi luôn là tua, kể cả khi ngón tay rơi đúng ổ khóa hay nút của JW Player
+      // (chạm lần 1 làm hiện các nút đó ngay dưới ngón tay).
       if (Date.now() - lastTapUp < DOUBLE_TAP_MS) {
         repeatTap = true;
         clearTimeout(lockHintTimer);
         stop(e);
         return;
       }
+
+      // Ổ khóa của script: chỉ không cho trình phát thấy, để click vẫn xảy ra.
+      if (lockButtonOf(e.target)) {
+        e.stopImmediatePropagation();
+        return;
+      }
+      if (isJwControl(e.target)) return;
 
       if (isLocked(player)) stop(e);
       holdTimer = setTimeout(() => startHold(player), HOLD_MS);
@@ -372,7 +374,8 @@
         if (player) stop(e);
         return;
       }
-      if (!player || !e.isPrimary || lockButtonOf(e.target) || isJwControl(e.target)) return;
+      if (!player || !e.isPrimary) return;
+      if (!repeatTap && (lockButtonOf(e.target) || isJwControl(e.target))) return;
 
       if (hideFromPlayer(player)) stop(e);
 
@@ -399,7 +402,7 @@
       const player = playerOf(e.target);
       if (!player) return;
 
-      if (lockButtonOf(e.target)) {
+      if (lockButtonOf(e.target) && !repeatTap) {
         e.stopImmediatePropagation();
         if (e.type !== 'click') return;
         e.preventDefault();
@@ -407,7 +410,7 @@
         else lock(player);
         return;
       }
-      if (isJwControl(e.target)) return;
+      if (isJwControl(e.target) && !repeatTap) return;
 
       if (hideFromPlayer(player)) stop(e);
     }

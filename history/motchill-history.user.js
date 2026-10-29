@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Motchill - lịch sử xem
 // @namespace    motchill-history
-// @version      1.3
+// @version      1.4
 // @author       zic
 // @homepageURL  https://github.com/nhattruong16062003/motchill-userscripts/tree/main/history
 // @updateURL    https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/history/motchill-history.user.js
@@ -22,7 +22,8 @@
   const MAX_SHOWS = 20;            // Giữ tối đa 20 phim gần nhất.
   const SAVE_EVERY_MS = 5000;      // Đang xem: lưu vị trí 5 giây một lần.
   const MIN_RESUME_SECONDS = 10;   // Chưa xem quá 10 giây thì không tua lại.
-  const FINISHED_RATIO = 0.95;     // Xem quá 95% tập = xem xong.
+  const FINISHED_RATIO = 0.95;
+  const MIN_EPISODE_SECONDS = 120; // Video ngắn hơn 2 phút (video giả lúc đổi server...) không phải tập phim.     // Xem quá 95% tập = xem xong.
   const STORE_KEY = 'history';
 
   // Lịch sử nằm trong kho riêng của Tampermonkey / Userscripts (GM.getValue / GM.setValue),
@@ -34,32 +35,42 @@
   //  KHO LƯU
   // ============================================================
   let shows = [];
-  const loaded = GM.getValue(STORE_KEY, '[]').then((raw) => {
-    try {
-      shows = JSON.parse(raw) || [];
-    } catch (e) {
-      shows = [];
-    }
-  });
 
-  function persist() {
-    shows.sort((a, b) => b.updatedAt - a.updatedAt);
-    shows = shows.slice(0, MAX_SHOWS);
-    GM.setValue(STORE_KEY, JSON.stringify(shows));
+  function parse(raw) {
+    try {
+      const list = JSON.parse(raw);
+      return Array.isArray(list) ? list.filter((s) => s && s.slug) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  const reload = () => GM.getValue(STORE_KEY, '[]').then((raw) => { shows = parse(raw); });
+  const loaded = reload();
+
+  // Mỗi lần sửa đều đọc lại kho trước (tab khác, hoặc trang quay lại bằng nút Back,
+  // có thể đang giữ bản cũ), và sửa lần lượt từng cái một.
+  let queue = loaded;
+  function change(fn) {
+    queue = queue.then(reload).then(() => {
+      fn();
+      shows.sort((a, b) => b.updatedAt - a.updatedAt);
+      shows = shows.slice(0, MAX_SHOWS);
+      return GM.setValue(STORE_KEY, JSON.stringify(shows));
+    });
+    return queue;
   }
 
   const findShow = (slug) => shows.find((s) => s.slug === slug);
 
-  function upsertShow(entry) {
+  const upsertShow = (entry) => change(() => {
     shows = shows.filter((s) => s.slug !== entry.slug);
     shows.push({ ...entry, updatedAt: Date.now() });
-    persist();
-  }
+  });
 
-  function removeShow(slug) {
+  const removeShow = (slug) => change(() => {
     shows = shows.filter((s) => s.slug !== slug);
-    persist();
-  }
+  });
 
   // ============================================================
   //  TẮT CƠ CHẾ LƯU VỊ TRÍ CỦA TRANG
@@ -111,17 +122,20 @@
       ? { path: new URL(next.href).pathname, episode: 'Tập ' + next.textContent.trim() }
       : null;
 
-    const saved = findShow(slug);
-    const resumeAt = saved && saved.path === path ? saved.position : 0;
-
     // Trang tạo lại trình phát khi đổi server -> kiểm tra định kỳ để gắn vào video mới.
+    // Mỗi video mới tua về vị trí đã lưu GẦN NHẤT (không phải vị trí lúc mở trang),
+    // và chỉ video đang hiện mới được lưu.
     let attached = null;
+    let saving = Promise.resolve();
     setInterval(() => {
       const video = document.querySelector('.jwplayer video');
-      if (video && video !== attached) {
-        attached = video;
-        watchVideo(video, info, resumeAt, nextEpisode);
-      }
+      if (!video || video === attached) return;
+      attached = video;
+      saving.then(() => {
+        const saved = findShow(slug);
+        const resumeAt = saved && saved.path === path ? saved.position : 0;
+        watchVideo(video, info, resumeAt, nextEpisode, () => attached === video, (p) => { saving = p; });
+      });
     }, 1000);
   }
 
@@ -131,7 +145,7 @@
     return document.title.replace(/^Phim\s+/, '').split(' - ')[0];
   }
 
-  function watchVideo(video, info, resumeAt, nextEpisode) {
+  function watchVideo(video, info, resumeAt, nextEpisode, isActive, onSave) {
     let ready = false;      // Chỉ lưu sau khi đã quyết định có tua hay không.
     let lastSave = 0;
     let finished = false;
@@ -149,23 +163,25 @@
     }
 
     function save() {
-      if (!ready || finished) return;
-      const duration = video.duration || 0;
+      if (!ready || !isActive()) return;
+      const duration = Number.isFinite(video.duration) ? video.duration : 0;
       const position = video.currentTime || 0;
+      // Lỡ tua qua đoạn cuối rồi tua ngược lại: tính là đang xem tiếp, không phải đã xem xong.
+      if (finished && duration && position < duration * FINISHED_RATIO - 30) finished = false;
+      if (finished || (duration && duration < MIN_EPISODE_SECONDS)) return;
       if (duration && position >= duration * FINISHED_RATIO) return markFinished();
       if (position < MIN_RESUME_SECONDS) return;
       lastSave = Date.now();
-      upsertShow({ ...info, position: Math.floor(position), duration: Math.floor(duration) });
+      onSave(upsertShow({ ...info, position: Math.floor(position), duration: Math.floor(duration) }));
     }
 
     // Xem xong: chuyển thẻ sang tập kế tiếp (vị trí 0), hết tập thì xóa khỏi danh sách.
     function markFinished() {
+      if (!isActive()) return;
       finished = true;
-      if (nextEpisode) {
-        upsertShow({ ...info, ...nextEpisode, position: 0, duration: 0 });
-      } else {
-        removeShow(info.slug);
-      }
+      onSave(nextEpisode
+        ? upsertShow({ ...info, ...nextEpisode, position: 0, duration: 0 })
+        : removeShow(info.slug));
     }
 
     if (video.readyState >= 1) start();
@@ -174,8 +190,12 @@
       if (Date.now() - lastSave >= SAVE_EVERY_MS) save();
     });
     video.addEventListener('pause', save);
+    // Trang gỡ video cũ khi đổi server cũng làm video phát 'ended': chỉ tin khi đã thật sự tới gần cuối.
     video.addEventListener('ended', () => {
-      if (!finished) markFinished();
+      const duration = video.duration;
+      if (!finished && Number.isFinite(duration) && duration >= MIN_EPISODE_SECONDS && video.currentTime >= duration * FINISHED_RATIO) {
+        markFinished();
+      }
     });
     // Chuyển app, tắt màn hình, rời trang: lưu ngay (không đợi sự kiện đóng trang).
     document.addEventListener('visibilitychange', () => {
@@ -231,13 +251,17 @@
     };
     render();
 
+    // Bấm Back từ trang xem phim: trình duyệt hiện lại trang chủ cũ mà không chạy lại script.
+    addEventListener('pageshow', (e) => {
+      if (e.persisted) reload().then(render);
+    });
+
     // Dấu × xóa phim khỏi danh sách; bấm chỗ khác trên thẻ là mở tập đó (link thường).
     row.addEventListener('click', (e) => {
       const remove = e.target.closest('[data-remove]');
       if (!remove) return;
       e.preventDefault();
-      removeShow(remove.dataset.remove);
-      render();
+      removeShow(remove.dataset.remove).then(render);
     });
   }
 
