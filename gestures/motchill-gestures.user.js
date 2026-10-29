@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Motchill - thao tác trình phát
 // @namespace    motchill-gestures
-// @version      1.2
+// @version      1.3
 // @author       zic
 // @homepageURL  https://github.com/nhattruong16062003/motchill-userscripts/tree/main/gestures
 // @updateURL    https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/gestures/motchill-gestures.user.js
@@ -334,6 +334,9 @@
     let repeatTap = false;
     // Lần chạm hiện tại vừa là một lần giữ x2.
     let afterHold = false;
+    // Ngón tay chạm xuống đúng ổ khóa đang hiện. Chạm vào chỗ trống làm JW hiện thanh điều khiển
+    // (và ổ khóa) ngay dưới ngón tay, nên lúc nhấc tay cú click có thể rơi trúng ổ khóa: không tính.
+    let pressedLock = false;
     let lockHintTimer = null;
 
     // Lần chạm hiện tại có phải để trình phát nhận không?
@@ -343,6 +346,7 @@
     addEventListener('pointerdown', (e) => {
       repeatTap = false;
       afterHold = false;
+      pressedLock = !!lockButtonOf(e.target);
       const player = playerOf(e.target);
       if (!player || !e.isPrimary) return;
 
@@ -404,6 +408,7 @@
 
       if (lockButtonOf(e.target) && !repeatTap) {
         e.stopImmediatePropagation();
+        if (!pressedLock) return e.preventDefault();
         if (e.type !== 'click') return;
         e.preventDefault();
         if (isLocked(player)) unlock(player);
