@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         Motchill - lịch sử xem
 // @namespace    motchill-history
-// @version      1.0
+// @version      1.1
 // @author       zic
-// @homepageURL  https://github.com/nhattruong16062003/motchill-userscripts
-// @updateURL    https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/motchill-history.user.js
-// @downloadURL  https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/motchill-history.user.js
+// @homepageURL  https://github.com/nhattruong16062003/motchill-userscripts/tree/main/history
+// @updateURL    https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/history/motchill-history.user.js
+// @downloadURL  https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/history/motchill-history.user.js
 // @description  Nhớ chỗ đang xem của từng phim trên motchilltu.com: mở lại là tự tua về chỗ cũ, trang chủ có hàng "Đang xem dở".
 // @match        https://motchilltu.com/*
 // @run-at       document-start
@@ -76,7 +76,14 @@
   // ============================================================
   const watchMatch = location.pathname.match(/^\/xem-phim\/([^/]+)\/([^/]+)\/?$/);
 
-  document.addEventListener('DOMContentLoaded', () => {
+  // Trang tải nhanh (từ bộ nhớ đệm) có thể đã xong trước khi script được nạp:
+  // khi đó chạy luôn, không đợi sự kiện DOMContentLoaded nữa.
+  function onPageReady(fn) {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
+    else fn();
+  }
+
+  onPageReady(() => {
     loaded.then(() => {
       if (watchMatch) setUpWatchPage(watchMatch[1]);
       else if (location.pathname === '/') addContinueRow();
@@ -130,15 +137,25 @@
     let lastSave = 0;
     let finished = false;
 
+    // Trình phát tải thông tin phim ngay khi mở trang (trước khi bấm Play):
+    // tua sẵn lúc đó, còn viên "Tiếp tục từ..." đợi tới lúc phim thật sự chạy mới hiện.
+    let tipPending = false;
+
     function start() {
       if (ready) return;
       ready = true;
       const duration = video.duration || 0;
       const canResume = resumeAt > MIN_RESUME_SECONDS && (!duration || resumeAt < duration * FINISHED_RATIO);
-      if (canResume) {
-        video.currentTime = resumeAt;
-        showResumeTip(video, resumeAt);
-      }
+      if (!canResume) return;
+      video.currentTime = resumeAt;
+      tipPending = true;
+      if (!video.paused) showTipOnce();
+    }
+
+    function showTipOnce() {
+      if (!tipPending) return;
+      tipPending = false;
+      showResumeTip(video, resumeAt);
     }
 
     function save() {
@@ -163,6 +180,7 @@
 
     if (video.readyState >= 1) start();
     video.addEventListener('loadedmetadata', start);
+    video.addEventListener('playing', showTipOnce);
     video.addEventListener('timeupdate', () => {
       if (Date.now() - lastSave >= SAVE_EVERY_MS) save();
     });
