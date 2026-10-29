@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         Motchill - thao tác trình phát
 // @namespace    motchill-gestures
-// @version      1.3
+// @version      1.4
 // @author       zic
 // @homepageURL  https://github.com/nhattruong16062003/motchill-userscripts/tree/main/gestures
 // @updateURL    https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/gestures/motchill-gestures.user.js
 // @downloadURL  https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/gestures/motchill-gestures.user.js
-// @description  Trình phát motchilltu.com: chạm 2 lần tua 10 giây, giữ để xem x2, khóa màn hình khi xem toàn màn hình.
+// @description  Trình phát motchilltu.com: chạm 2 lần tua 10 giây, giữ để xem x2, khóa màn hình khi xem toàn màn hình, nút bỏ qua giới thiệu và tập tiếp theo.
 // @match        https://motchilltu.com/*
 // @run-at       document-start
 // @grant        none
@@ -23,6 +23,7 @@
   //   - Giữ ngón tay: tốc độ x2, thả ra trở lại như cũ
   //   - Ổ khóa nhỏ ở mép trái, chỉ hiện khi phóng to. Khi khóa: chỉ còn tua
   //     10 giây và giữ x2; muốn dừng hay thu nhỏ phải mở khóa trước.
+  //   - Đầu phim: nút "Bỏ qua giới thiệu" (tới 1:30). 3 phút cuối: nút "Tập tiếp theo".
   //
   //  Cách JW Player nghe thao tác chạm trên Android (đã đọc mã của nó):
   //   - Mỗi lần chạm nó tự nhận touchstart/touchend; 2 lần touchend cách nhau
@@ -36,6 +37,9 @@
     const DOUBLE_TAP_MS = 300;
     const LOCK_ICON_SHOW_MS = 2500;
     const TIP_SHOW_MS = 700;
+    const INTRO_SECONDS = 90;        // Bỏ qua giới thiệu = tua tới 1:30.
+    const NEXT_SHOW_SECONDS = 180;   // Nút tập tiếp theo hiện trong 3 phút cuối.
+    const MIN_EPISODE_SECONDS = 600; // Không hiện nút với video ngắn (video giả lúc đổi server...).
 
     // ---- Biểu tượng (SVG nét mảnh, màu theo chữ) ----
     const svg = (paths, size = 16) =>
@@ -46,6 +50,7 @@
       lockClosed: svg('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>', 24),
       back: svg('<path d="M11 7l-5 5 5 5"/><path d="M17 7l-5 5 5 5"/>'),
       forward: svg('<path d="M7 7l5 5-5 5"/><path d="M13 7l5 5-5 5"/>'),
+      next: svg('<path d="M6 6l9 6-9 6z"/><path d="M18 6v12"/>'),
       // Một mũi tên tam giác nhỏ; 2x dùng ba cái nối nhau.
       triangle: '<svg viewBox="0 0 10 12" width="9" height="12"><path d="M0 0L10 6L0 12z" fill="currentColor"/></svg>',
     };
@@ -119,6 +124,37 @@
       .jwplayer.mc-locked.mc-show-lock .mc-lock {
         opacity: 1;
         pointer-events: auto;
+      }
+
+      /* Nút "Bỏ qua giới thiệu" / "Tập tiếp theo": cùng kiểu kính mờ với "10s", "2x",
+         góc phải, nằm trên thanh điều khiển. */
+      .mc-action {
+        position: absolute;
+        right: 16px;
+        bottom: 64px;
+        z-index: 2147483646;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, .12);
+        backdrop-filter: blur(10px) saturate(140%);
+        -webkit-backdrop-filter: blur(10px) saturate(140%);
+        border: .5px solid rgba(255, 255, 255, .28);
+        color: #fff;
+        font: 500 14px sans-serif;
+        white-space: nowrap;
+        animation: mc-pop-in .25s ease-out;
+      }
+      /* Khi khóa vẫn còn nút "Tập tiếp theo" (nằm trên lớp phủ nên bấm được). */
+      .mc-action[data-action=""],
+      .jwplayer.mc-locked .mc-action[data-action="intro"] {
+        display: none;
+      }
+      @keyframes mc-pop-in {
+        from { opacity: 0; transform: translateY(6px); }
+        to { opacity: 1; transform: none; }
       }
 
       /* Chữ báo "10s", "2x": viên nhỏ kiểu kính mờ, nhìn xuyên được xuống phim. */
@@ -202,7 +238,41 @@
           <span class="mc-closed">${ICON.lockClosed}</span>
         </div>
         <div class="mc-tip"></div>
+        <div class="mc-action" role="button" data-action=""></div>
       `);
+    }
+
+    // ---- Bỏ qua giới thiệu / tập tiếp theo ----
+    // Tập kế tiếp = link ngay sau tập đang xem, trong cùng danh sách (Vietsub / Thuyết minh...).
+    function nextEpisodeUrl() {
+      const current = document.querySelector('.list-episode a.current');
+      const next = current && current.nextElementSibling;
+      return next && next.matches('a[href]') ? next.href : null;
+    }
+
+    function updateAction(player) {
+      const video = videoOf(player);
+      const button = player.querySelector(':scope > .mc-action');
+      if (!video || !button) return;
+      const time = video.currentTime;
+      const duration = Number.isFinite(video.duration) ? video.duration : 0;
+
+      let action = '';
+      if (duration >= MIN_EPISODE_SECONDS) {
+        if (time > 0 && time < INTRO_SECONDS - 5) action = 'intro';
+        else if (duration - time < NEXT_SHOW_SECONDS && nextEpisodeUrl()) action = 'next';
+      }
+      if (button.dataset.action === action) return;
+      button.dataset.action = action;
+      button.innerHTML = action === 'intro' ? `Bỏ qua giới thiệu ${ICON.forward}`
+        : action === 'next' ? `Tập tiếp theo ${ICON.next}` : '';
+    }
+
+    function runAction(player, button) {
+      const video = videoOf(player);
+      if (button.dataset.action === 'intro' && video) video.currentTime = INTRO_SECONDS;
+      if (button.dataset.action === 'next' && nextEpisodeUrl()) location.href = nextEpisodeUrl();
+      updateAction(player);
     }
 
     // Trang tạo lại trình phát khi đổi server -> kiểm tra định kỳ.
@@ -210,13 +280,15 @@
     setInterval(() => {
       document.querySelectorAll('.jwplayer').forEach((player) => {
         ensureUI(player);
+        updateAction(player);
         if (isLocked(player) && !isFullscreen(player)) unlock(player);
       });
-    }, 1000);
+    }, 500);
 
     // ---- Tiện ích nhỏ ----
     const playerOf = (el) => (el && el.closest ? el.closest('.jwplayer') : null);
-    const lockButtonOf = (el) => el.closest('.mc-lock');
+    // Nút của script (ổ khóa, bỏ qua giới thiệu, tập tiếp theo).
+    const buttonOf = (el) => el.closest('.mc-lock, .mc-action');
     // Thanh điều khiển, menu cài đặt... của JW: để nó tự xử lý như bình thường.
     const isJwControl = (el) =>
       el.closest('.jw-controlbar, .jw-settings-menu, .jw-plugin, .jw-rightclick, .jw-info-overlay, .jw-shortcuts-tooltip');
@@ -334,9 +406,9 @@
     let repeatTap = false;
     // Lần chạm hiện tại vừa là một lần giữ x2.
     let afterHold = false;
-    // Ngón tay chạm xuống đúng ổ khóa đang hiện. Chạm vào chỗ trống làm JW hiện thanh điều khiển
+    // Ngón tay chạm xuống đúng nút của script đang hiện. Chạm vào chỗ trống làm JW hiện thanh điều khiển
     // (và ổ khóa) ngay dưới ngón tay, nên lúc nhấc tay cú click có thể rơi trúng ổ khóa: không tính.
-    let pressedLock = false;
+    let pressedButton = false;
     let lockHintTimer = null;
 
     // Lần chạm hiện tại có phải để trình phát nhận không?
@@ -346,7 +418,7 @@
     addEventListener('pointerdown', (e) => {
       repeatTap = false;
       afterHold = false;
-      pressedLock = !!lockButtonOf(e.target);
+      pressedButton = !!buttonOf(e.target);
       const player = playerOf(e.target);
       if (!player || !e.isPrimary) return;
 
@@ -359,8 +431,8 @@
         return;
       }
 
-      // Ổ khóa của script: chỉ không cho trình phát thấy, để click vẫn xảy ra.
-      if (lockButtonOf(e.target)) {
+      // Nút của script: chỉ không cho trình phát thấy, để click vẫn xảy ra.
+      if (buttonOf(e.target)) {
         e.stopImmediatePropagation();
         return;
       }
@@ -379,7 +451,7 @@
         return;
       }
       if (!player || !e.isPrimary) return;
-      if (!repeatTap && (lockButtonOf(e.target) || isJwControl(e.target))) return;
+      if (!repeatTap && (buttonOf(e.target) || isJwControl(e.target))) return;
 
       if (hideFromPlayer(player)) stop(e);
 
@@ -406,12 +478,14 @@
       const player = playerOf(e.target);
       if (!player) return;
 
-      if (lockButtonOf(e.target) && !repeatTap) {
+      const button = buttonOf(e.target);
+      if (button && !repeatTap) {
         e.stopImmediatePropagation();
-        if (!pressedLock) return e.preventDefault();
+        if (!pressedButton) return e.preventDefault();
         if (e.type !== 'click') return;
         e.preventDefault();
-        if (isLocked(player)) unlock(player);
+        if (button.classList.contains('mc-action')) runAction(player, button);
+        else if (isLocked(player)) unlock(player);
         else lock(player);
         return;
       }

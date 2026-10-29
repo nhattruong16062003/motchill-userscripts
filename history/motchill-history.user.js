@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Motchill - lịch sử xem
 // @namespace    motchill-history
-// @version      1.5
+// @version      1.6
 // @author       zic
 // @homepageURL  https://github.com/nhattruong16062003/motchill-userscripts/tree/main/history
 // @updateURL    https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/history/motchill-history.user.js
@@ -94,6 +94,7 @@
   }
 
   onPageReady(() => {
+    addMenuItem();
     loaded.then(() => {
       if (watchMatch) setUpWatchPage(watchMatch[1]);
       else if (location.pathname === '/') addContinueRow();
@@ -233,6 +234,21 @@
   }
 
   // ============================================================
+  //  MENU: mục "Lịch sử xem" ngay dưới TV SHOWS (menu ba gạch trên điện thoại và menu máy tính)
+  //  Mở trang chủ và cuộn tới hàng "Đang xem dở". Thêm '?lich-su' để trang luôn tải lại
+  //  (nếu chỉ đổi '#', bấm từ trang chủ thì menu không đóng).
+  // ============================================================
+  const HISTORY_ID = 'dang-xem-do';
+
+  function addMenuItem() {
+    document.querySelectorAll('li > a[href="/danh-sach/tv-shows/"]').forEach((link) => {
+      const item = link.parentElement.cloneNode(false); // Giữ class của trang để cùng kiểu chữ.
+      item.innerHTML = `<a title="Lịch sử xem" href="/?lich-su#${HISTORY_ID}">LỊCH SỬ XEM</a>`;
+      link.parentElement.after(item);
+    });
+  }
+
+  // ============================================================
   //  TRANG CHỦ: hàng "Đang xem dở"
   // ============================================================
   function addContinueRow() {
@@ -242,6 +258,7 @@
 
     const section = document.createElement('div');
     section.className = 'mh-continue';
+    section.id = HISTORY_ID;
     section.innerHTML = `<h2 class="mh-heading">${ICON.history}Đang xem dở</h2><div class="mh-row"></div>`;
     anchor.parentElement.insertBefore(section, anchor);
 
@@ -251,6 +268,7 @@
       row.innerHTML = shows.map(cardHtml).join('');
     };
     render();
+    if (location.hash === '#' + HISTORY_ID) section.scrollIntoView({ block: 'center' });
 
     // Bấm Back từ trang xem phim: trình duyệt hiện lại trang chủ cũ mà không chạy lại script.
     addEventListener('pageshow', (e) => {
