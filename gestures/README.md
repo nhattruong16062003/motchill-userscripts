@@ -1,8 +1,8 @@
 # Thao tác trình phát
 
-Tên khi cài: *Motchill - thao tác trình phát* (phiên bản 1.3).
+Tên khi cài: *Motchill - thao tác trình phát* (phiên bản 1.4).
 
-Thêm cử chỉ cho trình phát phim trên **motchilltu.com**: chạm 2 lần để tua 10 giây, giữ ngón tay để xem nhanh x2, khóa màn hình khi xem toàn màn hình để lỡ chạm cũng không dừng phim.
+Thêm cử chỉ cho trình phát phim trên **motchilltu.com**: chạm 2 lần để tua 10 giây, giữ ngón tay để xem nhanh x2, khóa màn hình khi xem toàn màn hình để lỡ chạm cũng không dừng phim, nút bỏ qua giới thiệu và nút tập tiếp theo.
 
 ## Dùng được trên
 
@@ -56,6 +56,15 @@ Khi đã khóa:
 - Bấm nút Quay lại của điện thoại để thoát toàn màn hình cũng sẽ mở khóa.
 
 <img src="../docs/images/use-06-locked.png" width="560" alt="Đã khóa: màn hình chỉ còn ổ khóa">
+
+### Bỏ qua giới thiệu và tập tiếp theo
+
+Một nút nhỏ nền mờ hiện ở góc phải, ngay trên thanh thời gian:
+
+- **Bỏ qua giới thiệu**: hiện từ đầu phim tới 1:25. Bấm là tua tới 1:30.
+- **Tập tiếp theo**: hiện trong 3 phút cuối, nếu còn tập sau. Bấm là mở tập kế tiếp.
+
+Nút vẫn hiện khi thanh điều khiển đã ẩn, nên chỉ cần chạm 1 lần. Khi màn hình đang khóa, chỉ còn nút **Tập tiếp theo**.
 
 ## Lưu ý
 

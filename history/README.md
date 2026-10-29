@@ -1,6 +1,6 @@
 # Lịch sử xem
 
-Tên khi cài: *Motchill - lịch sử xem* (phiên bản 1.5).
+Tên khi cài: *Motchill - lịch sử xem* (phiên bản 1.6).
 
 Nhớ chỗ bạn đang xem dở ở từng phim trên **motchilltu.com**. Mở lại tập đó là phim tự tua tới chỗ cũ và chạy tiếp. Trang chủ có thêm hàng **Đang xem dở** để vào lại phim nhanh.
 
@@ -60,6 +60,8 @@ Thấy nút **Chạm để bật tiếng** ở góc dưới bên phải khung ph
 Xem quá 95% một tập thì tập đó tính là đã xem xong: thẻ chuyển sang tập kế tiếp và ghi *chưa xem*. Xem xong tập cuối thì phim tự rời khỏi hàng.
 
 Hàng này giữ 20 phim bạn xem gần nhất.
+
+Ở trang khác: bấm **menu ba gạch** → **LỊCH SỬ XEM** (ngay dưới *TV SHOWS*) để về trang chủ, đúng chỗ hàng **Đang xem dở**.
 
 ## Lưu ý
 
