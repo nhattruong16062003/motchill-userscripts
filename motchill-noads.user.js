@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Motchill - chặn quảng cáo + cử chỉ tua
 // @namespace    motchill-noads
-// @version      3.2.2
+// @version      3.3
 // @author       zic
 // @homepageURL  https://github.com/nhattruong16062003/motchill-noads
 // @updateURL    https://raw.githubusercontent.com/nhattruong16062003/motchill-noads/main/motchill-noads.user.js
@@ -157,7 +157,8 @@
       lockClosed: svg('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>', 24),
       back: svg('<path d="M11 7l-5 5 5 5"/><path d="M17 7l-5 5 5 5"/>'),
       forward: svg('<path d="M7 7l5 5-5 5"/><path d="M13 7l5 5-5 5"/>'),
-      fast: svg('<path d="M4 6v12l8-6z"/><path d="M12 6v12l8-6z"/>'),
+      // Một mũi tên tam giác nhỏ; 2x dùng ba cái nối nhau.
+      triangle: '<svg viewBox="0 0 10 12" width="9" height="12"><path d="M0 0L10 6L0 12z" fill="currentColor"/></svg>',
     };
 
     addStyle(`
@@ -244,22 +245,67 @@
         transform: translate(-50%, -50%);
         display: flex;
         align-items: center;
-        gap: 5px;
-        padding: 5px 11px;
+        gap: 6px;
+        padding: 6px 14px;
         border-radius: 999px;
-        background: rgba(255, 255, 255, .14);
+        overflow: hidden;
+        background: rgba(255, 255, 255, .12);
         backdrop-filter: blur(10px) saturate(140%);
         -webkit-backdrop-filter: blur(10px) saturate(140%);
-        border: .5px solid rgba(255, 255, 255, .32);
+        border: .5px solid rgba(255, 255, 255, .28);
         color: #fff;
-        font: 500 13px sans-serif;
+        font: 500 14px sans-serif;
         white-space: nowrap;
         pointer-events: none;
         opacity: 0;
-        transition: opacity .15s;
+        transition: opacity .2s;
       }
       .mc-tip.mc-on {
         opacity: 1;
+      }
+
+      /* 2x: chữ đứng yên, ba mũi tên sáng lên nối tiếp nhau và nhích nhẹ sang phải. */
+      .mc-chevrons {
+        display: flex;
+      }
+      .mc-chevrons svg {
+        margin-left: -1px;
+        opacity: .3;
+        animation: mc-run 1s ease-in-out infinite;
+      }
+      .mc-chevrons svg:nth-child(2) {
+        animation-delay: .15s;
+      }
+      .mc-chevrons svg:nth-child(3) {
+        animation-delay: .3s;
+      }
+      @keyframes mc-run {
+        0%, 100% { opacity: .3; transform: translateX(0); }
+        35% { opacity: 1; transform: translateX(2px); }
+      }
+
+      /* 10s: viên kính nảy nhẹ khi hiện, mũi tên trượt theo chiều tua. */
+      .mc-tip.mc-skip.mc-on {
+        animation: mc-pop .25s ease-out;
+      }
+      .mc-tip.mc-forward.mc-on svg {
+        animation: mc-nudge-right .35s ease-out;
+      }
+      .mc-tip.mc-back.mc-on svg {
+        animation: mc-nudge-left .35s ease-out;
+      }
+      @keyframes mc-pop {
+        from { transform: translate(-50%, -50%) scale(.85); }
+        60% { transform: translate(-50%, -50%) scale(1.04); }
+        to { transform: translate(-50%, -50%) scale(1); }
+      }
+      @keyframes mc-nudge-right {
+        from { transform: translateX(-4px); opacity: .3; }
+        to { transform: none; opacity: 1; }
+      }
+      @keyframes mc-nudge-left {
+        from { transform: translateX(4px); opacity: .3; }
+        to { transform: none; opacity: 1; }
       }
     `);
 
@@ -304,12 +350,16 @@
     // ---- Chữ báo kính mờ ----
     let tipTimer = null;
 
-    function showTip(player, html, left, top, keep) {
+    // kind = class hiệu ứng: 'mc-fast' (2x), 'mc-skip mc-forward' / 'mc-skip mc-back' (tua).
+    function showTip(player, html, left, top, kind, keep) {
       const tip = player.querySelector('.mc-tip');
       if (!tip) return;
       tip.innerHTML = html;
       tip.style.left = left;
       tip.style.top = top;
+      // Đặt lại class rồi ép trình duyệt vẽ lại, để hiệu ứng chạy lại từ đầu mỗi lần chạm.
+      tip.className = `mc-tip ${kind}`;
+      void tip.offsetWidth;
       tip.classList.add('mc-on');
       clearTimeout(tipTimer);
       if (!keep) tipTimer = setTimeout(() => tip.classList.remove('mc-on'), TIP_SHOW_MS);
@@ -317,7 +367,7 @@
 
     function hideTip(player) {
       const tip = player.querySelector('.mc-tip');
-      if (tip) tip.classList.remove('mc-on');
+      if (tip) tip.className = 'mc-tip';
     }
 
     // ---- Khóa / mở khóa ----
@@ -352,7 +402,8 @@
       heldPlayer = player;
       normalRate = video.playbackRate;
       video.playbackRate = 2;
-      showTip(player, `2x ${ICON.fast}`, '50%', '12%', true);
+      const chevrons = `<span class="mc-chevrons">${ICON.triangle.repeat(3)}</span>`;
+      showTip(player, `2x ${chevrons}`, '50%', '12%', 'mc-fast', true);
     }
 
     // Trả về true nếu vừa kết thúc một lần giữ x2.
@@ -375,10 +426,10 @@
 
       if (x < 0.4) {
         video.currentTime = Math.max(0, video.currentTime - SKIP_SECONDS);
-        showTip(player, `${ICON.back} 10s`, '22%', '50%');
+        showTip(player, `${ICON.back} 10s`, '22%', '50%', 'mc-skip mc-back');
       } else if (x > 0.6) {
         video.currentTime = Math.min(video.duration || Infinity, video.currentTime + SKIP_SECONDS);
-        showTip(player, `10s ${ICON.forward}`, '78%', '50%');
+        showTip(player, `10s ${ICON.forward}`, '78%', '50%', 'mc-skip mc-forward');
       }
     }
 
