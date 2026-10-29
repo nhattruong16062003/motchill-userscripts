@@ -1,6 +1,6 @@
 # Thao tác trình phát
 
-Tên khi cài: *Motchill - thao tác trình phát* (phiên bản 1.2).
+Tên khi cài: *Motchill - thao tác trình phát* (phiên bản 1.3).
 
 Thêm cử chỉ cho trình phát phim trên **motchilltu.com**: chạm 2 lần để tua 10 giây, giữ ngón tay để xem nhanh x2, khóa màn hình khi xem toàn màn hình để lỡ chạm cũng không dừng phim.
 
