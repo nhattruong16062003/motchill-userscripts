@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Motchill - lịch sử xem
 // @namespace    motchill-history
-// @version      1.4
+// @version      1.5
 // @author       zic
 // @homepageURL  https://github.com/nhattruong16062003/motchill-userscripts/tree/main/history
 // @updateURL    https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/history/motchill-history.user.js
@@ -154,8 +154,9 @@
     // không cần bấm Play hay chọn gì.
     function start() {
       if (ready) return;
+      const duration = Number.isFinite(video.duration) ? video.duration : 0;
+      if (duration && duration < MIN_EPISODE_SECONDS) return; // Video giả: đợi phim thật nạp vào.
       ready = true;
-      const duration = video.duration || 0;
       const canResume = resumeAt > MIN_RESUME_SECONDS && (!duration || resumeAt < duration * FINISHED_RATIO);
       if (!canResume) return;
       video.currentTime = resumeAt;
