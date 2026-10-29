@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Motchill - lịch sử xem
 // @namespace    motchill-history
-// @version      1.1
+// @version      1.2
 // @author       zic
 // @homepageURL  https://github.com/nhattruong16062003/motchill-userscripts/tree/main/history
 // @updateURL    https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/history/motchill-history.user.js
@@ -302,8 +302,9 @@
       cursor: pointer;
       animation: mh-in .25s ease-out;
     }
-    .mh-resume { left: 12px; }
-    .mh-restart { right: 12px; }
+    /* "Tiếp tục từ..." bên phải, "Xem từ đầu" bên trái. */
+    .mh-resume { right: 12px; }
+    .mh-restart { left: 12px; }
     /* Vạch mờ dần ở chân viên "Tiếp tục từ...", cho biết còn bao lâu thì tự ẩn. */
     .mh-countdown {
       position: absolute;
