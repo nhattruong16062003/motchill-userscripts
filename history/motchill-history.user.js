@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Motchill - lịch sử xem
 // @namespace    motchill-history
-// @version      1.2
+// @version      1.3
 // @author       zic
 // @homepageURL  https://github.com/nhattruong16062003/motchill-userscripts/tree/main/history
 // @updateURL    https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/history/motchill-history.user.js
@@ -23,7 +23,6 @@
   const SAVE_EVERY_MS = 5000;      // Đang xem: lưu vị trí 5 giây một lần.
   const MIN_RESUME_SECONDS = 10;   // Chưa xem quá 10 giây thì không tua lại.
   const FINISHED_RATIO = 0.95;     // Xem quá 95% tập = xem xong.
-  const RESUME_TIP_MS = 6000;      // Viên "Tiếp tục từ..." tự ẩn sau 6 giây.
   const STORE_KEY = 'history';
 
   // Lịch sử nằm trong kho riêng của Tampermonkey / Userscripts (GM.getValue / GM.setValue),
@@ -137,10 +136,8 @@
     let lastSave = 0;
     let finished = false;
 
-    // Trình phát tải thông tin phim ngay khi mở trang (trước khi bấm Play):
-    // tua sẵn lúc đó, còn viên "Tiếp tục từ..." đợi tới lúc phim thật sự chạy mới hiện.
-    let tipPending = false;
-
+    // Trình phát tải thông tin phim ngay khi mở trang: lúc đó tua về chỗ cũ và cho phim chạy luôn,
+    // không cần bấm Play hay chọn gì.
     function start() {
       if (ready) return;
       ready = true;
@@ -148,14 +145,7 @@
       const canResume = resumeAt > MIN_RESUME_SECONDS && (!duration || resumeAt < duration * FINISHED_RATIO);
       if (!canResume) return;
       video.currentTime = resumeAt;
-      tipPending = true;
-      if (!video.paused) showTipOnce();
-    }
-
-    function showTipOnce() {
-      if (!tipPending) return;
-      tipPending = false;
-      showResumeTip(video, resumeAt);
+      autoPlay(video);
     }
 
     function save() {
@@ -180,7 +170,6 @@
 
     if (video.readyState >= 1) start();
     video.addEventListener('loadedmetadata', start);
-    video.addEventListener('playing', showTipOnce);
     video.addEventListener('timeupdate', () => {
       if (Date.now() - lastSave >= SAVE_EVERY_MS) save();
     });
@@ -195,31 +184,31 @@
     addEventListener('pagehide', save);
   }
 
-  // ---- Viên kính mờ "Tiếp tục từ mm:ss" + "Xem từ đầu" ----
-  function showResumeTip(video, seconds) {
+  // ---- Tự chạy phim sau khi tua ----
+  // Firefox mặc định chặn video tự phát CÓ TIẾNG khi trang vừa mở. Bị chặn thì cho chạy tắt tiếng,
+  // hiện viên "Chạm để bật tiếng"; chạm bất kỳ đâu trên phim là bật lại tiếng.
+  function autoPlay(video) {
+    const attempt = video.play();
+    if (!attempt) return;
+    attempt.catch(() => {
+      video.muted = true;
+      video.play().then(() => offerUnmute(video)).catch(() => {});
+    });
+  }
+
+  function offerUnmute(video) {
     const player = video.closest('.jwplayer');
     if (!player) return;
-    player.querySelectorAll(':scope > .mh-pill').forEach((el) => el.remove());
+    player.insertAdjacentHTML('beforeend',
+      `<div class="mh-pill" role="button">${ICON.muted}<span>Chạm để bật tiếng</span></div>`);
+    const pill = player.querySelector(':scope > .mh-pill');
 
-    player.insertAdjacentHTML('beforeend', `
-      <div class="mh-pill mh-resume" role="button">${ICON.resume}<span>Tiếp tục từ ${formatTime(seconds)}</span><i class="mh-countdown"></i></div>
-      <div class="mh-pill mh-restart" role="button">${ICON.restart}<span>Xem từ đầu</span></div>
-    `);
-    const pills = player.querySelectorAll(':scope > .mh-pill');
-    const hide = () => pills.forEach((el) => el.remove());
-    const timer = setTimeout(hide, RESUME_TIP_MS);
-
-    player.querySelector('.mh-resume').addEventListener('click', (e) => {
-      e.stopPropagation();
-      clearTimeout(timer);
-      hide();
-    });
-    player.querySelector('.mh-restart').addEventListener('click', (e) => {
-      e.stopPropagation();
-      clearTimeout(timer);
-      video.currentTime = 0;
-      hide();
-    });
+    const unmute = () => {
+      video.muted = false;
+      pill.remove();
+      player.removeEventListener('click', unmute, true);
+    };
+    player.addEventListener('click', unmute, true);
   }
 
   // ============================================================
@@ -274,16 +263,16 @@
     `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor"
           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
   const ICON = {
-    resume: svg('<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>'),
-    restart: svg('<path d="M19 20L9 12l10-8z"/><path d="M5 5v14"/>'),
+    muted: svg('<path d="M11 5L6 9H3v6h3l5 4z"/><path d="M22 9l-6 6"/><path d="M16 9l6 6"/>'),
     history: svg('<path d="M12 8v4l2 2"/><path d="M3.05 11a9 9 0 1 1 .5 4"/><path d="M3 4v7h7"/>', 18),
     close: svg('<path d="M18 6L6 18"/><path d="M6 6l12 12"/>', 12),
   };
 
   const PLAYER_CSS = `
-    /* Viên kính mờ giống chữ báo 10s / 2x của script chặn quảng cáo. */
+    /* Viên kính mờ "Chạm để bật tiếng", giống chữ báo 10s / 2x của script thao tác. */
     .mh-pill {
       position: absolute;
+      right: 12px;
       bottom: 56px;
       z-index: 2147483640;
       display: flex;
@@ -302,27 +291,9 @@
       cursor: pointer;
       animation: mh-in .25s ease-out;
     }
-    /* "Tiếp tục từ..." bên phải, "Xem từ đầu" bên trái. */
-    .mh-resume { right: 12px; }
-    .mh-restart { left: 12px; }
-    /* Vạch mờ dần ở chân viên "Tiếp tục từ...", cho biết còn bao lâu thì tự ẩn. */
-    .mh-countdown {
-      position: absolute;
-      left: 12px;
-      right: 12px;
-      bottom: 0;
-      height: 2px;
-      border-radius: 2px;
-      background: rgba(255, 255, 255, .55);
-      transform-origin: left;
-      animation: mh-countdown ${RESUME_TIP_MS}ms linear forwards;
-    }
     @keyframes mh-in {
       from { opacity: 0; transform: translateY(6px); }
       to { opacity: 1; transform: none; }
-    }
-    @keyframes mh-countdown {
-      to { transform: scaleX(0); }
     }
   `;
 
