@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Motchill - chặn quảng cáo + cử chỉ tua
 // @namespace    motchill-noads
-// @version      3.3
+// @version      3.4
 // @author       zic
 // @homepageURL  https://github.com/nhattruong16062003/motchill-noads
 // @updateURL    https://raw.githubusercontent.com/nhattruong16062003/motchill-noads/main/motchill-noads.user.js
@@ -131,7 +131,7 @@
   //  TRÌNH PHÁT (JW Player của motchilltu.com)
   //   - Chạm 2 lần bên trái / phải: lùi / tới 10 giây (chạm tiếp để tua thêm)
   //   - Giữ ngón tay: tốc độ x2, thả ra trở lại như cũ
-  //   - Ổ khóa nhỏ ở mép phải, chỉ hiện khi phóng to. Khi khóa: chỉ còn tua
+  //   - Ổ khóa nhỏ ở mép trái, chỉ hiện khi phóng to. Khi khóa: chỉ còn tua
   //     10 giây và giữ x2; muốn dừng hay thu nhỏ phải mở khóa trước.
   //   - Ẩn nút chia sẻ của trình phát.
   //
@@ -200,12 +200,12 @@
         display: none !important;
       }
 
-      /* Ổ khóa: tròn 48 px, cách mép phải 48 px cho vừa tầm ngón cái khi cầm ngang,
+      /* Ổ khóa: tròn 48 px, cách mép trái 48 px cho vừa tầm ngón cái khi cầm ngang,
          mặc định ẩn. */
       .mc-lock {
         position: absolute;
         top: 50%;
-        right: 48px;
+        left: 48px;
         z-index: 2147483646;
         width: 48px;
         height: 48px;
@@ -375,18 +375,29 @@
 
     function lock(player) {
       player.classList.add('mc-locked');
-      flashLockIcon(player);
+      showLockIcon(player);
     }
 
     function unlock(player) {
+      clearTimeout(lockIconTimer);
       player.classList.remove('mc-locked', 'mc-show-lock');
     }
 
     // Khi đã khóa: hiện ổ khóa ít giây để người xem bấm vào mở.
-    function flashLockIcon(player) {
+    function showLockIcon(player) {
       player.classList.add('mc-show-lock');
       clearTimeout(lockIconTimer);
       lockIconTimer = setTimeout(() => player.classList.remove('mc-show-lock'), LOCK_ICON_SHOW_MS);
+    }
+
+    // Chạm 1 lần khi đã khóa: ổ khóa đang ẩn thì hiện, đang hiện thì ẩn (giống app xem phim).
+    function toggleLockIcon(player) {
+      if (player.classList.contains('mc-show-lock')) {
+        clearTimeout(lockIconTimer);
+        player.classList.remove('mc-show-lock');
+      } else {
+        showLockIcon(player);
+      }
     }
 
     // ---- Giữ ngón tay: x2 ----
@@ -485,9 +496,9 @@
       if (repeatTap) {
         seek(player, e.clientX);
       } else if (isLocked(player)) {
-        // Chạm 1 lần khi khóa: hiện ổ khóa (chờ xem có phải chạm 2 lần không).
+        // Chạm 1 lần khi khóa: hiện/ẩn ổ khóa (chờ xem có phải chạm 2 lần không).
         clearTimeout(lockHintTimer);
-        lockHintTimer = setTimeout(() => flashLockIcon(player), DOUBLE_TAP_MS);
+        lockHintTimer = setTimeout(() => toggleLockIcon(player), DOUBLE_TAP_MS);
       }
       lastTapUp = Date.now();
     }, true);
