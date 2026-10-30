@@ -1,8 +1,8 @@
 # Lịch sử xem
 
-Tên khi cài: *Motchill - lịch sử xem* (phiên bản 1.7).
+Tên khi cài: *Motchill - lịch sử xem* (phiên bản 1.8).
 
-Nhớ chỗ bạn đang xem dở ở từng phim trên **motchilltu.com**. Mở lại tập đó là phim tự tua tới chỗ cũ và chạy tiếp. Trang chủ có thêm hàng **Đang xem dở** để vào lại phim nhanh.
+Nhớ chỗ bạn đang xem dở ở từng phim trên **Motchill** (motchillsa.com). Mở lại tập đó là phim tự tua tới chỗ cũ và chạy tiếp. Trang chủ có thêm hàng **Đang xem dở** để vào lại phim nhanh.
 
 Script này không bắt buộc. Cài thêm nếu bạn cần.
 
@@ -30,7 +30,7 @@ Các bước cài từng bước trên Android có trong [hướng dẫn chung](
 
 Firefox mặc định không cho trang tự phát phim. Muốn phim tự chạy tiếp khi mở lại:
 
-1. Mở một trang bất kỳ của **motchilltu.com** bằng Firefox.
+1. Mở một trang bất kỳ của **motchillsa.com** bằng Firefox.
 2. Chạm biểu tượng **tấm khiên** ở bên trái thanh địa chỉ.
 3. Ở mục **Quyền hạn**, chạm **Tự động phát**, chọn **Cho phép âm thanh và video** (mặc định là *Chỉ chặn âm thanh*).
 
@@ -67,6 +67,6 @@ Hàng này giữ 20 phim bạn xem gần nhất.
 
 - Lịch sử được lưu trong Tampermonkey, không lưu trong trang web. Vì vậy xóa dữ liệu của trang web thì lịch sử vẫn còn. Trang đổi tên miền và script được cập nhật theo thì lịch sử cũ cũng vẫn còn.
 - Lịch sử chỉ mất khi bạn gỡ script này hoặc gỡ Tampermonkey.
-- Trang motchilltu.com cũng có sẵn chức năng nhớ chỗ xem (`OPCMS-PlayerPosition`), nhưng dùng chung cho mọi phim nên dễ tua nhầm. Script tắt chức năng đó để hai bên không tua đè lên nhau.
+- Trang Motchill cũng có sẵn chức năng nhớ chỗ xem (`OPCMS-PlayerPosition`), nhưng dùng chung cho mọi phim nên dễ tua nhầm. Script tắt chức năng đó để hai bên không tua đè lên nhau.
 - Mở lại mà phim chạy từ đầu: tập đó mới xem chưa tới 10 giây, hoặc bạn đang không chọn server **VIP #1**.
 - Phim tới đúng chỗ cũ nhưng không tự chạy: xem lại phần **Cho phép tự động phát** ở trên, hoặc bấm Play một lần.

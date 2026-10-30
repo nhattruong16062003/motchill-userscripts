@@ -1,6 +1,6 @@
 # Motchill userscripts
 
-Ba script nhỏ giúp xem phim trên **motchilltu.com** dễ chịu hơn: không quảng cáo, tua và xem nhanh bằng cử chỉ, nhớ chỗ đang xem dở. Script chạy ngay trong trình duyệt, không cần cài ứng dụng riêng.
+Ba script nhỏ giúp xem phim trên **Motchill** (hiện là motchillsa.com) dễ chịu hơn: không quảng cáo, tua và xem nhanh bằng cử chỉ, nhớ chỗ đang xem dở. Script chạy ngay trong trình duyệt, không cần cài ứng dụng riêng.
 
 Mỗi script chạy riêng. Bạn cần cái nào thì cài cái đó.
 
@@ -45,11 +45,11 @@ Muốn cài thêm script khác, làm lại bước 3 với link của script đ�
 
 > Máy từng cài bản cũ *Motchill - chặn quảng cáo + cử chỉ tua* (một script gộp chung): gỡ bản đó đi (xem phần **Gỡ cài đặt** ở cuối trang). Các script mới đã thay cho nó.
 
-**Bước 4.** Mở **motchilltu.com** và xem phim. Muốn kiểm tra: bấm **⋮** → **Tiện ích** → **Tampermonkey**. Các script đã cài hiện ra, công tắc màu xanh là đang chạy.
+**Bước 4.** Mở **motchillsa.com** và xem phim. Muốn kiểm tra: bấm **⋮** → **Tiện ích** → **Tampermonkey**. Các script đã cài hiện ra, công tắc màu xanh là đang chạy.
 
 <img src="docs/images/android-04-scripts-enabled.png" width="320" alt="Tampermonkey liệt kê 3 script đang bật">
 
-**Nếu cài Lịch sử xem:** cho phép trang tự phát phim, để phim tự chạy tiếp từ chỗ cũ. Trên motchilltu.com, chạm biểu tượng **tấm khiên** bên trái thanh địa chỉ → **Quyền hạn** → **Tự động phát** → **Cho phép âm thanh và video**. Có hình trong [hướng dẫn Lịch sử xem](history/README.md).
+**Nếu cài Lịch sử xem:** cho phép trang tự phát phim, để phim tự chạy tiếp từ chỗ cũ. Trên motchillsa.com, chạm biểu tượng **tấm khiên** bên trái thanh địa chỉ → **Quyền hạn** → **Tự động phát** → **Cho phép âm thanh và video**. Có hình trong [hướng dẫn Lịch sử xem](history/README.md).
 
 ---
 
@@ -63,13 +63,13 @@ Cần iOS 15.1 trở lên. Phải dùng **Safari**; Chrome và Firefox trên iPh
 
 <img src="docs/images/ios-01-app-store.png" width="320" alt="Hình minh họa: cài Userscripts từ App Store">
 
-**Bước 2.** Vào **Cài đặt → Ứng dụng → Safari → Phần mở rộng** (iOS 17 trở xuống: **Cài đặt → Safari → Phần mở rộng**). Bật **Userscripts** và cho phép nó chạy, ít nhất là trên motchilltu.com.
+**Bước 2.** Vào **Cài đặt → Ứng dụng → Safari → Phần mở rộng** (iOS 17 trở xuống: **Cài đặt → Safari → Phần mở rộng**). Bật **Userscripts** và cho phép nó chạy, ít nhất là trên motchillsa.com. Trang đổi sang tên miền mới thì cho phép thêm tên miền đó (hoặc chọn cho phép trên mọi trang web).
 
 <img src="docs/images/ios-02-enable-extension.png" width="320" alt="Hình minh họa: bật phần mở rộng Userscripts">
 
 **Bước 3.** Mở link cài đặt **Chặn quảng cáo** ở trên bằng Safari. Bấm **AA** (hoặc biểu tượng mảnh ghép) ở thanh địa chỉ → **Userscripts**, rồi bấm nút cài đặt hiện ra.
 
-**Bước 4.** Mở **motchilltu.com** trong Safari, bấm **AA** → **Userscripts**. Thấy script đang bật thì tải lại trang là xong.
+**Bước 4.** Mở **motchillsa.com** trong Safari, bấm **AA** → **Userscripts**. Thấy script đang bật thì tải lại trang là xong.
 
 <img src="docs/images/ios-03-check-in-safari.png" width="320" alt="Hình minh họa: kiểm tra script trong Safari">
 
@@ -95,7 +95,7 @@ Mỗi máy chỉ cần cài một lần, sau đó script tự chạy và tự c�
 
 <img src="docs/images/chrome-03-install-page.png" width="560" alt="Trang cài script của Tampermonkey có nút Cài đặt">
 
-**Bước 4.** Mở **motchilltu.com** và xem phim. Muốn kiểm tra: mở **Tampermonkey** → **Bảng tổng quan**; các script đã cài phải đang bật.
+**Bước 4.** Mở **motchillsa.com** và xem phim. Muốn kiểm tra: mở **Tampermonkey** → **Bảng tổng quan**; các script đã cài phải đang bật.
 
 <img src="docs/images/chrome-04-scripts-enabled.png" width="560" alt="Bảng điều khiển Tampermonkey liệt kê 3 script đã bật">
 

@@ -1,8 +1,8 @@
 # Thao tác trình phát
 
-Tên khi cài: *Motchill - thao tác trình phát* (phiên bản 1.5).
+Tên khi cài: *Motchill - thao tác trình phát* (phiên bản 1.5.1).
 
-Thêm cử chỉ cho trình phát phim trên **motchilltu.com**: chạm 2 lần để tua 10 giây, giữ ngón tay để xem nhanh x2, khóa màn hình khi xem toàn màn hình để lỡ chạm cũng không dừng phim, nút bỏ qua giới thiệu và nút tập tiếp theo.
+Thêm cử chỉ cho trình phát phim trên **Motchill** (motchillsa.com): chạm 2 lần để tua 10 giây, giữ ngón tay để xem nhanh x2, khóa màn hình khi xem toàn màn hình để lỡ chạm cũng không dừng phim, nút bỏ qua giới thiệu và nút tập tiếp theo.
 
 ## Dùng được trên
 
@@ -73,4 +73,4 @@ Nút vẫn hiện khi thanh điều khiển đã ẩn, nên chỉ cần chạm 1
 - Không tua được, không xem x2 được: kiểm tra bạn đang chọn server **VIP #1**.
 - Không thấy ổ khóa: ổ khóa chỉ có khi xem toàn màn hình. Chạm 1 lần vào phim để hiện.
 - Thoát app hoặc cửa sổ nhỏ (PiP) có thể làm trình duyệt thoát toàn màn hình. Khi quay lại, chạm 1 lần vào phim để xem toàn màn hình tiếp; trình duyệt không cho trang tự bật lại khi chưa chạm.
-- Script chỉ chạy trên motchilltu.com. Nếu trang đổi sang tên miền khác, cần chờ bản cập nhật.
+- Script chạy trên mọi tên miền có chữ *motchill*, nên trang đổi tên miền vẫn dùng được. Script chỉ có tác dụng với bản trang dùng trình phát như motchillsa.com.
