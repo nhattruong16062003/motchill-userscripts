@@ -116,6 +116,10 @@ Muốn cập nhật ngay: mở lại link cài đặt của script. Trang hiện
 
 <img src="docs/images/android-05-update-page.png" width="320" alt="Trang cập nhật: bản mới 4.1, bản đang cài 4.0, nút Cập nhật">
 
+- Nếu trang hiện cảnh báo **"Ít nhất một câu lệnh @include, @match hoặc @exclude được thay đổi"** (ví dụ khi trang đổi tên miền): Tampermonkey sẽ **không tự cập nhật** bản này, phải mở lại link cài và bấm **Cập nhật** cho từng script. Cập nhật xong thì tải lại trang phim.
+
+<img src="docs/images/android-06-update-match-change.png" width="320" alt="Trang cập nhật của Tampermonkey báo @match thay đổi, bản cài 4.3, bản mới 4.5, nút Cập nhật">
+
 - Vừa có bản mới mà trang vẫn hiện bản cũ: chờ vài phút rồi mở lại. Hoặc thêm `?v=` và một số bất kỳ vào cuối link, ví dụ `.../motchill-noads.user.js?v=2`.
 - Xem bản đang cài: **⋮** → **Tiện ích** → **Tampermonkey** → **Bảng tổng quan**, bấm biểu tượng cây bút ở dòng của script. Tên tab vừa mở có số phiên bản ở cuối.
 

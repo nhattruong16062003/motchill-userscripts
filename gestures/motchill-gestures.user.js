@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Motchill - thao tác trình phát
 // @namespace    motchill-gestures
-// @version      1.6.1
+// @version      1.6.2
 // @author       zic
 // @homepageURL  https://github.com/nhattruong16062003/motchill-userscripts/tree/main/gestures
 // @updateURL    https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/gestures/motchill-gestures.user.js
@@ -90,19 +90,12 @@
         const item = link.parentElement;
         if (item.parentElement.querySelector('a.mc-auto-next')) return;
         const copy = item.cloneNode(false);
-        copy.innerHTML = '<a class="mc-auto-next" role="button" href="#"></a>';
+        copy.innerHTML = '<a class="mc-auto-next" role="switch" href="#">TỰ CHUYỂN TẬP <span class="mc-switch"></span></a>';
         const historyItem = item.nextElementSibling;
         (historyItem && historyItem.querySelector('a[href="/?lich-su#dang-xem-do"]') ? historyItem : item).after(copy);
       });
-      // Cạnh khung "Đổi server" dưới trình phát (mọi màn hình), cùng kiểu khung của trang.
-      const servers = document.querySelector('.tip-change-server');
-      if (servers && !document.querySelector('.mc-auto-next-box')) {
-        servers.insertAdjacentHTML('afterend', `<div class="film-note mc-auto-next-box" style="${servers.getAttribute('style') || ''}">`
-          + '<a class="mc-auto-next" role="button" href="#" style="color:#e8a568">'
-          + '</a></div>');
-      }
       document.querySelectorAll('a.mc-auto-next').forEach((link) => {
-        link.textContent = `TỰ CHUYỂN TẬP: ${autoNextOn() ? 'BẬT' : 'TẮT'}`;
+        link.setAttribute('aria-checked', String(autoNextOn()));
       });
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addAutoNextMenu);
@@ -149,6 +142,11 @@
       .jwplayer .jw-display-icon-rewind,
       .jwplayer .jw-display-icon-next {
         visibility: hidden !important;
+      }
+
+      /* Biểu tượng loa gạch chéo JW hiện khi tự phát không tiếng: chạm vào phim là có tiếng, không cần. */
+      .jwplayer .jw-autostart-mute {
+        display: none !important;
       }
 
       /* Lớp phủ trong suốt khi khóa: mọi thao tác chạm rơi vào đây. */
@@ -235,6 +233,44 @@
       @keyframes mc-pop-in {
         from { opacity: 0; transform: translateY(6px); }
         to { opacity: 1; transform: none; }
+      }
+
+      /* Công tắc "Tự chuyển tập" trong menu ☰. */
+      a.mc-auto-next {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+      }
+      /* Trang gắn dấu "+" (mở menu con) cho mọi mục menu: mục này không có menu con. */
+      a.mc-auto-next::after {
+        content: none !important;
+      }
+      .mc-switch {
+        position: relative;
+        flex: none;
+        width: 36px;
+        height: 20px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, .25);
+        transition: background .2s;
+      }
+      .mc-switch::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #fff;
+        transition: transform .2s;
+      }
+      a.mc-auto-next[aria-checked="true"] .mc-switch {
+        background: #e8a568;
+      }
+      a.mc-auto-next[aria-checked="true"] .mc-switch::after {
+        transform: translateX(16px);
       }
 
       /* Chữ báo "10s", "2x": viên nhỏ kiểu kính mờ, nhìn xuyên được xuống phim. */
@@ -757,10 +793,10 @@
 
       if (x < 0.4) {
         video.currentTime = Math.max(0, video.currentTime - SKIP_SECONDS);
-        showTip(player, `${ICON.back} 10s`, '22%', '50%', 'mc-skip mc-back');
+        showTip(player, `${ICON.back} 10s`, '22%', '40%', 'mc-skip mc-back');
       } else if (x > 0.6) {
         video.currentTime = Math.min(video.duration || Infinity, video.currentTime + SKIP_SECONDS);
-        showTip(player, `10s ${ICON.forward}`, '78%', '50%', 'mc-skip mc-forward');
+        showTip(player, `10s ${ICON.forward}`, '78%', '40%', 'mc-skip mc-forward');
       }
     }
 
