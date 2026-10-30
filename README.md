@@ -82,6 +82,10 @@ Cần iOS 15.1 trở lên. Phải dùng **Safari**; Chrome và Firefox trên iPh
 
 <img src="docs/images/ios-04-save-to-files.png" width="320" alt="Hình minh họa: file nằm trong thư mục Userscripts">
 
+**Kết quả** (chụp trên nhân Safari, màn hình iPhone 15 Pro Max): bên trái là trang khi chưa cài, bên phải là khi đã cài **Chặn quảng cáo**.
+
+<img src="docs/images/ios-05-before-noads.png" width="240" alt="Trang tập phim trên iPhone khi chưa cài: đầy banner quảng cáo, trình phát đang tải quảng cáo video"> <img src="docs/images/ios-06-after-noads.png" width="240" alt="Trang tập phim trên iPhone khi đã cài Chặn quảng cáo: không còn banner, vào thẳng phim">
+
 ---
 
 ## Cài trên máy tính (Chrome)
