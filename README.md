@@ -12,6 +12,11 @@ Mỗi script chạy riêng. Bạn cần cái nào thì cài cái đó.
 
 Trên iPhone, iPad chỉ nên cài **Chặn quảng cáo**. Lý do có trong hướng dẫn của từng script.
 
+Motchill có 2 bản trang khác nhau, đều hay đổi tên miền. Script chạy trên mọi tên miền có chữ *motchill*:
+
+- **Bản motchillsa.com** (trước là motchilltu.com): cả 3 script đều dùng được.
+- **Bản motchilln.fm** (trước là motchillt.app): chỉ **Chặn quảng cáo** có tác dụng. Trình phát của bản này đã có sẵn nút tua 10 giây, khóa màn hình, giữ để tua nhanh và hỏi xem tiếp chỗ cũ.
+
 **Link cài đặt** (Android mở bằng Firefox, iPhone mở bằng Safari, máy tính mở bằng Chrome):
 
 - Chặn quảng cáo: https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/noads/motchill-noads.user.js
