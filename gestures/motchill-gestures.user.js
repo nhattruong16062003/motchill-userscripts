@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Motchill - thao tác trình phát
 // @namespace    motchill-gestures
-// @version      1.6
+// @version      1.6.1
 // @author       zic
 // @homepageURL  https://github.com/nhattruong16062003/motchill-userscripts/tree/main/gestures
 // @updateURL    https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/gestures/motchill-gestures.user.js
@@ -79,7 +79,6 @@
       return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
     };
     const margin = (values) => Math.max(5, Math.min(30, (Math.max(...values) - Math.min(...values)) / 2));
-    const clock = (seconds) => `${Math.floor(Math.round(seconds) / 60)}:${String(Math.round(seconds) % 60).padStart(2, '0')}`;
 
     function autoNextOn() {
       try { return localStorage.getItem('mc-auto-next') === '1'; }
@@ -544,7 +543,6 @@
           if (lastIntroSeek >= 10 && lastIntroSeek <= 300) {
             const end = Math.round(lastIntroSeek);
             saveMark('intro', end);
-            showTip(player, `Đã nhớ: hết giới thiệu ở ${clock(end)}`, '50%', '50%', '', false, 2500);
           }
           lastIntroSeek = null;
         }, 15000);
@@ -560,8 +558,6 @@
               outroLearned = true; // Bấm nhiều lần lúc đang chuyển tập chỉ tính 1 lần.
               const updated = [...samples(), Math.max(1, Math.round(left))].slice(-5);
               saveMark('outro', updated);
-              const standard = median(updated);
-              showTip(player, `Đã nhớ đoạn cuối ${clock(standard)} (${updated.length} tập) · nút hiện lúc còn ${clock(Math.min(300, standard + 30))}`, '50%', '50%', '', false, 2500);
             }
           }
           goNext(player);
@@ -618,7 +614,7 @@
     let tipTimer = null;
 
     // kind = class hiệu ứng: 'mc-fast' (2x), 'mc-skip mc-forward' / 'mc-skip mc-back' (tua).
-    function showTip(player, html, left, top, kind, keep, duration = TIP_SHOW_MS) {
+    function showTip(player, html, left, top, kind, keep) {
       const tip = player.querySelector('.mc-tip');
       if (!tip) return;
       tip.innerHTML = html;
@@ -629,7 +625,7 @@
       void tip.offsetWidth;
       tip.classList.add('mc-on');
       clearTimeout(tipTimer);
-      if (!keep) tipTimer = setTimeout(() => tip.classList.remove('mc-on'), duration);
+      if (!keep) tipTimer = setTimeout(() => tip.classList.remove('mc-on'), TIP_SHOW_MS);
     }
 
     function hideTip(player) {
