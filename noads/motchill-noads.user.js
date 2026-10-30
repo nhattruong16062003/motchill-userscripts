@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Motchill - chặn quảng cáo + tối ưu mạng
 // @namespace    motchill-noads
-// @version      4.2
+// @version      4.3
 // @author       zic
 // @homepageURL  https://github.com/nhattruong16062003/motchill-userscripts/tree/main/noads
 // @updateURL    https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/noads/motchill-noads.user.js
@@ -35,9 +35,39 @@
 
   if (host === 'motchilltu.com') {
     blockMotchilltu();
+    disableVideoAds();
     if (DISABLE_P2P) disableP2P();
   } else if (host === 'motchillt.app') {
     blockMotchillt();
+  }
+
+  // Trang gán thư viện JW Player sau khi script chạy: bỏ VAST trước mỗi setup.
+  function disableVideoAds() {
+    const wrappedApis = new WeakSet();
+    function wrap(fn) {
+      if (typeof fn !== 'function') return fn;
+      return new Proxy(fn, {
+        apply(target, thisArg, args) {
+          const api = Reflect.apply(target, thisArg, args);
+          if (api && typeof api.setup === 'function' && !wrappedApis.has(api)) {
+            const setup = api.setup;
+            api.setup = function (config, ...rest) {
+              if (config) delete config.advertising;
+              return setup.call(this, config, ...rest);
+            };
+            wrappedApis.add(api);
+          }
+          return api;
+        },
+      });
+    }
+
+    let jw = wrap(window.jwplayer);
+    Object.defineProperty(window, 'jwplayer', {
+      configurable: true,
+      get() { return jw; },
+      set(value) { jw = wrap(value); },
+    });
   }
 
   // ============================================================

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Motchill - lịch sử xem
 // @namespace    motchill-history
-// @version      1.6
+// @version      1.7
 // @author       zic
 // @homepageURL  https://github.com/nhattruong16062003/motchill-userscripts/tree/main/history
 // @updateURL    https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/history/motchill-history.user.js
@@ -96,7 +96,7 @@
   onPageReady(() => {
     addMenuItem();
     loaded.then(() => {
-      if (watchMatch) setUpWatchPage(watchMatch[1]);
+      if (watchMatch) setUpWatchPage();
       else if (location.pathname === '/') addContinueRow();
     });
   });
@@ -104,38 +104,44 @@
   // ============================================================
   //  TRANG XEM PHIM: tự tua về chỗ cũ và lưu vị trí
   // ============================================================
-  function setUpWatchPage(slug) {
+  function setUpWatchPage() {
     addStyle(PLAYER_CSS);
-
-    const path = location.pathname;
-    const current = document.querySelector('.list-episode a.current');
-    const info = {
-      slug,
-      path,
-      title: readTitle(slug),
-      episode: current ? 'Tập ' + current.textContent.trim() : '',
-      poster: (document.querySelector('meta[property="og:image"]') || {}).content || '',
-    };
-
-    // Tập kế tiếp = link ngay sau tập đang xem, trong cùng danh sách (Vietsub / Thuyết minh...).
-    const next = current ? current.nextElementSibling : null;
-    const nextEpisode = next && next.matches('a[href]')
-      ? { path: new URL(next.href).pathname, episode: 'Tập ' + next.textContent.trim() }
-      : null;
 
     // Trang tạo lại trình phát khi đổi server -> kiểm tra định kỳ để gắn vào video mới.
     // Mỗi video mới tua về vị trí đã lưu GẦN NHẤT (không phải vị trí lúc mở trang),
     // và chỉ video đang hiện mới được lưu.
     let attached = null;
+    let attachedPath = null;
     let saving = Promise.resolve();
     setInterval(() => {
       const video = document.querySelector('.jwplayer video');
-      if (!video || video === attached) return;
+      const path = location.pathname;
+      if (!video || (video === attached && path === attachedPath)) return;
+      const match = path.match(/^\/xem-phim\/([^/]+)\/([^/]+)\/?$/);
+      if (!match) return;
+      const slug = match[1];
+      const current = document.querySelector('.list-episode a.current');
+      const info = {
+        slug,
+        path,
+        title: readTitle(slug),
+        episode: current ? 'Tập ' + current.textContent.trim() : '',
+        poster: (document.querySelector('meta[property="og:image"]') || {}).content || '',
+      };
+
+      // Tập kế tiếp = link ngay sau tập đang xem, trong cùng danh sách (Vietsub / Thuyết minh...).
+      const next = current ? current.nextElementSibling : null;
+      const nextEpisode = next && next.matches('a[href]')
+        ? { path: new URL(next.href).pathname, episode: 'Tập ' + next.textContent.trim() }
+        : null;
+
       attached = video;
+      attachedPath = path;
       saving.then(() => {
+        if (attached !== video || location.pathname !== path) return;
         const saved = findShow(slug);
         const resumeAt = saved && saved.path === path ? saved.position : 0;
-        watchVideo(video, info, resumeAt, nextEpisode, () => attached === video, (p) => { saving = p; });
+        watchVideo(video, info, resumeAt, nextEpisode, () => attached === video && location.pathname === path, (p) => { saving = p; });
       });
     }, 1000);
   }
@@ -154,7 +160,7 @@
     // Trình phát tải thông tin phim ngay khi mở trang: lúc đó tua về chỗ cũ và cho phim chạy luôn,
     // không cần bấm Play hay chọn gì.
     function start() {
-      if (ready) return;
+      if (ready || !isActive()) return;
       const duration = Number.isFinite(video.duration) ? video.duration : 0;
       if (duration && duration < MIN_EPISODE_SECONDS) return; // Video giả: đợi phim thật nạp vào.
       ready = true;

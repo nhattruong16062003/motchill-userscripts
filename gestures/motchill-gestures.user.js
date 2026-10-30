@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Motchill - thao tác trình phát
 // @namespace    motchill-gestures
-// @version      1.4
+// @version      1.5
 // @author       zic
 // @homepageURL  https://github.com/nhattruong16062003/motchill-userscripts/tree/main/gestures
 // @updateURL    https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/gestures/motchill-gestures.user.js
@@ -9,6 +9,7 @@
 // @description  Trình phát motchilltu.com: chạm 2 lần tua 10 giây, giữ để xem x2, khóa màn hình khi xem toàn màn hình, nút bỏ qua giới thiệu và tập tiếp theo.
 // @match        https://motchilltu.com/*
 // @run-at       document-start
+// @inject-into  page
 // @grant        none
 // ==/UserScript==
 
@@ -244,10 +245,74 @@
 
     // ---- Bỏ qua giới thiệu / tập tiếp theo ----
     // Tập kế tiếp = link ngay sau tập đang xem, trong cùng danh sách (Vietsub / Thuyết minh...).
-    function nextEpisodeUrl() {
+    function nextEpisodeLink() {
       const current = document.querySelector('.list-episode a.current');
       const next = current && current.nextElementSibling;
-      return next && next.matches('a[href]') ? next.href : null;
+      return next && next.matches('a[href]') ? next : null;
+    }
+
+    function nextEpisodeUrl() {
+      const next = nextEpisodeLink();
+      return next ? next.href : null;
+    }
+
+    let goingNext = false;
+    function goNext(player) {
+      const next = nextEpisodeLink();
+      if (!next || goingNext) return;
+      const url = next.href;
+      if (!isFullscreen(player)) {
+        location.href = url;
+        return;
+      }
+
+      goingNext = true;
+      try {
+        const xhr = new XMLHttpRequest();
+        // Trang ghi đè window.fetch nên phải dùng XHR.
+        xhr.responseType = 'document';
+        xhr.onload = () => {
+          try {
+            if (xhr.status < 200 || xhr.status >= 300 || !xhr.responseXML) throw new Error('Không tải được tập');
+            const doc = xhr.responseXML;
+            const servers = [...doc.querySelectorAll('.tip-change-server .streaming-server')];
+            const currentServers = [...document.querySelectorAll('.tip-change-server .streaming-server')];
+            const index = currentServers.findIndex((button) => button.classList.contains('btn-success'));
+            const playable = (button) => button && /^(m3u8|mp4)$/.test(button.dataset.type) && button.dataset.link;
+            const server = index >= 0 && playable(servers[index]) ? servers[index] : servers.find(playable);
+            const tip = document.querySelector('.tip-change-server');
+            const nextTip = doc.querySelector('.tip-change-server');
+            if (!server || !tip || !nextTip || !window.jwplayer) throw new Error('Không có server');
+            const jw = jwplayer(player.id);
+            if (!jw || !jw.load || !jw.play) throw new Error('Không có trình phát');
+
+            jw.load([{ file: server.dataset.link.replace(/^http:\/\//i, 'https://'), image: jw.getPlaylistItem().image }]);
+            jw.play();
+            history.pushState(null, '', url);
+            document.title = doc.title;
+            document.querySelector('.list-episode a.current').classList.remove('current');
+            next.classList.add('current');
+            tip.innerHTML = nextTip.innerHTML;
+            tip.querySelectorAll('.streaming-server.btn-success').forEach((button) => button.classList.remove('btn-success'));
+            tip.querySelectorAll('.streaming-server')[servers.indexOf(server)].classList.add('btn-success');
+            for (const selector of ['.breadcrumbs li.active', '.chapter-name']) {
+              const currentLabel = document.querySelector(selector);
+              const nextLabel = doc.querySelector(selector);
+              if (currentLabel && nextLabel) currentLabel.textContent = nextLabel.textContent;
+            }
+            addEventListener('popstate', () => location.reload(), { once: true });
+            goingNext = false;
+          } catch (e) {
+            location.href = url;
+          }
+        };
+        xhr.onerror = xhr.onabort = xhr.ontimeout = () => { location.href = url; };
+        xhr.open('GET', url);
+        xhr.timeout = 15000;
+        xhr.send();
+      } catch (e) {
+        location.href = url;
+      }
     }
 
     function updateAction(player) {
@@ -271,17 +336,30 @@
     function runAction(player, button) {
       const video = videoOf(player);
       if (button.dataset.action === 'intro' && video) video.currentTime = INTRO_SECONDS;
-      if (button.dataset.action === 'next' && nextEpisodeUrl()) location.href = nextEpisodeUrl();
+      if (button.dataset.action === 'next') goNext(player);
       updateAction(player);
     }
 
     // Trang tạo lại trình phát khi đổi server -> kiểm tra định kỳ.
     // Đồng thời: thoát phóng to (kể cả bằng nút Back) thì tự mở khóa.
     setInterval(() => {
+      if (restorePlayer && !restorePlayer.isConnected) clearRestore();
       document.querySelectorAll('.jwplayer').forEach((player) => {
         ensureUI(player);
         updateAction(player);
         if (isLocked(player) && !isFullscreen(player)) unlock(player);
+        if (player.dataset.mcNext || !window.jwplayer) return;
+        try {
+          const jw = jwplayer(player.id);
+          if (!jw || !jw.on || !jw.off || !jw._events || !jw._events.complete) return;
+          const redirects = jw._events.complete.filter((h) => /location\.href/.test(h.callback));
+          if (!redirects.length) return;
+          redirects.forEach((h) => jw.off('complete', h.callback));
+          jw.on('complete', () => goNext(player));
+          player.dataset.mcNext = '1';
+        } catch (e) {
+          // Trình phát chưa sẵn sàng: thử lại ở lần kiểm tra sau.
+        }
       });
     }, 500);
 
@@ -324,6 +402,63 @@
       const tip = player.querySelector('.mc-tip');
       if (tip) tip.className = 'mc-tip';
     }
+
+    // Firefox thoát toàn màn hình khi chuyển app / PiP; thử lại khi quay về.
+    let fullscreenPlayer = null;
+    let restorePlayer = null;
+    let restoreLocked = false;
+    let lastReturn = 0;
+
+    function clearRestore(restoredPlayer) {
+      if (restoredPlayer === restorePlayer && restoreLocked) lock(restoredPlayer);
+      if (restorePlayer) hideTip(restorePlayer);
+      restorePlayer = null;
+      restoreLocked = false;
+    }
+
+    function requestRestore(player) {
+      player.requestFullscreen().then(() => {
+        if (document.fullscreenElement === player) clearRestore(player);
+      }, () => {});
+    }
+
+    function tryRestore() {
+      if (!restorePlayer) return;
+      if (!restorePlayer.isConnected) return clearRestore();
+      if (!document.hidden && document.hasFocus() && !document.fullscreenElement) requestRestore(restorePlayer);
+    }
+
+    document.addEventListener('fullscreenchange', () => {
+      const current = document.fullscreenElement;
+      if (current) {
+        clearRestore(current);
+        fullscreenPlayer = current.matches('.jwplayer') ? current : null;
+      } else if (fullscreenPlayer) {
+        const player = fullscreenPlayer;
+        fullscreenPlayer = null;
+        const locked = isLocked(player);
+        if (locked) unlock(player);
+        if (player.isConnected && (document.hidden || !document.hasFocus() || Date.now() - lastReturn < 3000)) {
+          restorePlayer = player;
+          restoreLocked = locked;
+          lastTapUp = 0;
+          showTip(player, 'Chạm để xem toàn màn hình', '50%', '50%', '', true);
+          tryRestore();
+        }
+      }
+    });
+    addEventListener('blur', () => { lastReturn = 0; });
+    addEventListener('focus', () => {
+      lastReturn = Date.now();
+      tryRestore();
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) lastReturn = 0;
+      else {
+        lastReturn = Date.now();
+        tryRestore();
+      }
+    });
 
     // ---- Khóa / mở khóa ----
     let lockIconTimer = null;
@@ -406,6 +541,8 @@
     let repeatTap = false;
     // Lần chạm hiện tại vừa là một lần giữ x2.
     let afterHold = false;
+    // Lần chạm dành riêng cho việc bật lại toàn màn hình.
+    let restoreTap = false;
     // Ngón tay chạm xuống đúng nút của script đang hiện. Chạm vào chỗ trống làm JW hiện thanh điều khiển
     // (và ổ khóa) ngay dưới ngón tay, nên lúc nhấc tay cú click có thể rơi trúng ổ khóa: không tính.
     let pressedButton = false;
@@ -413,11 +550,12 @@
 
     // Lần chạm hiện tại có phải để trình phát nhận không?
     // Không, nếu: đang khóa, là lần chạm thứ 2 trở đi, hoặc vừa giữ x2.
-    const hideFromPlayer = (player) => isLocked(player) || repeatTap || afterHold;
+    const hideFromPlayer = (player) => isLocked(player) || repeatTap || afterHold || restoreTap;
 
     addEventListener('pointerdown', (e) => {
       repeatTap = false;
       afterHold = false;
+      restoreTap = false;
       pressedButton = !!buttonOf(e.target);
       const player = playerOf(e.target);
       if (!player || !e.isPrimary) return;
@@ -438,6 +576,12 @@
       }
       if (isJwControl(e.target)) return;
 
+      if (restorePlayer === player) {
+        restoreTap = true;
+        stop(e);
+        return;
+      }
+
       if (isLocked(player)) stop(e);
       holdTimer = setTimeout(() => startHold(player), HOLD_MS);
     }, true);
@@ -451,6 +595,12 @@
         return;
       }
       if (!player || !e.isPrimary) return;
+      if (restoreTap) {
+        stop(e);
+        lastTapUp = 0;
+        if (restorePlayer === player) requestRestore(player);
+        return;
+      }
       if (!repeatTap && (buttonOf(e.target) || isJwControl(e.target))) return;
 
       if (hideFromPlayer(player)) stop(e);
@@ -479,7 +629,7 @@
       if (!player) return;
 
       const button = buttonOf(e.target);
-      if (button && !repeatTap) {
+      if (button && !repeatTap && !restoreTap) {
         e.stopImmediatePropagation();
         if (!pressedButton) return e.preventDefault();
         if (e.type !== 'click') return;
@@ -489,7 +639,7 @@
         else lock(player);
         return;
       }
-      if (isJwControl(e.target) && !repeatTap) return;
+      if (isJwControl(e.target) && !repeatTap && !restoreTap) return;
 
       if (hideFromPlayer(player)) stop(e);
     }
