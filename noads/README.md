@@ -1,14 +1,14 @@
 # Chặn quảng cáo + tối ưu mạng
 
-Tên khi cài: *Motchill - chặn quảng cáo + tối ưu mạng* (phiên bản 4.2).
+Tên khi cài: *Motchill - chặn quảng cáo + tối ưu mạng* (phiên bản 4.3).
 
 Xem phim trên **motchilltu.com** và **motchillt.app** không còn quảng cáo. Script tự chạy, bạn không cần bấm gì.
 
 ## Dùng được trên
 
-| Android (Firefox) | iPhone, iPad (Safari) |
-| :---: | :---: |
-| Có | Có |
+| Android (Firefox) | iPhone, iPad (Safari) | Máy tính (Chrome) |
+| :---: | :---: | :---: |
+| Có | Có | Có |
 
 Đây là script duy nhất nên cài trên iPhone, iPad.
 
@@ -20,7 +20,7 @@ Link cài đặt:
 https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/noads/motchill-noads.user.js
 ```
 
-Các bước cài từng bước cho Android và iPhone có trong [hướng dẫn chung](../README.md).
+Các bước cài trên Android, iPhone và máy tính có trong [hướng dẫn chung](../README.md).
 
 ## Script làm gì
 
@@ -28,6 +28,7 @@ Các bước cài từng bước cho Android và iPhone có trong [hướng dẫ
 - Ẩn banner nằm ngay dưới khung phim.
 - Chặn popup quảng cáo hiện giữa màn hình.
 - Chặn tab quảng cáo tự mở ra khi bạn chạm vào bất kỳ chỗ nào trên trang.
+- Bỏ quảng cáo video trước tập phim trong trình phát trên motchilltu.com.
 - Ẩn nút chia sẻ trên trình phát.
 - Tắt chia sẻ dữ liệu giữa người xem (P2P). Phim chỉ tải từ máy chủ, máy bạn không phải tải lên cho người khác, nên đỡ tốn 4G và pin.
 

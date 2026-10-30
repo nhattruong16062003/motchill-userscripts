@@ -1,18 +1,18 @@
 # Motchill userscripts
 
-Ba script nhỏ giúp xem phim trên **motchilltu.com** dễ chịu hơn: không quảng cáo, tua và xem nhanh bằng cử chỉ, nhớ chỗ đang xem dở. Script chạy ngay trong trình duyệt điện thoại, không cần cài ứng dụng riêng.
+Ba script nhỏ giúp xem phim trên **motchilltu.com** dễ chịu hơn: không quảng cáo, tua và xem nhanh bằng cử chỉ, nhớ chỗ đang xem dở. Script chạy ngay trong trình duyệt, không cần cài ứng dụng riêng.
 
 Mỗi script chạy riêng. Bạn cần cái nào thì cài cái đó.
 
-| Script | Làm gì | Android | iPhone, iPad | Hướng dẫn dùng |
-| --- | --- | :---: | :---: | --- |
-| Chặn quảng cáo + tối ưu mạng | Bỏ banner, popup, tab quảng cáo tự mở; đỡ tốn 4G | Có | Có | [Xem](noads/README.md) |
-| Thao tác trình phát | Chạm 2 lần để tua 10 giây, giữ để xem x2, khóa màn hình | Có | Không | [Xem](gestures/README.md) |
-| Lịch sử xem | Nhớ chỗ đang xem dở, mở lại là xem tiếp | Có | Chưa nên cài | [Xem](history/README.md) |
+| Script | Làm gì | Android | iPhone, iPad | Máy tính (Chrome) | Hướng dẫn dùng |
+| --- | --- | :---: | :---: | :---: | --- |
+| Chặn quảng cáo + tối ưu mạng | Bỏ banner, popup, tab quảng cáo tự mở, quảng cáo video trước phim; đỡ tốn 4G | Có | Có | Có | [Xem](noads/README.md) |
+| Thao tác trình phát | Chạm 2 lần để tua 10 giây, giữ để xem x2, khóa màn hình | Có | Không | Có | [Xem](gestures/README.md) |
+| Lịch sử xem | Nhớ chỗ đang xem dở, mở lại là xem tiếp | Có | Chưa nên cài | Có | [Xem](history/README.md) |
 
 Trên iPhone, iPad chỉ nên cài **Chặn quảng cáo**. Lý do có trong hướng dẫn của từng script.
 
-**Link cài đặt** (Android mở bằng Firefox, iPhone mở bằng Safari):
+**Link cài đặt** (Android mở bằng Firefox, iPhone mở bằng Safari, máy tính mở bằng Chrome):
 
 - Chặn quảng cáo: https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/noads/motchill-noads.user.js
 - Thao tác trình phát: https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/gestures/motchill-gestures.user.js
@@ -79,6 +79,30 @@ Cần iOS 15.1 trở lên. Phải dùng **Safari**; Chrome và Firefox trên iPh
 
 ---
 
+## Cài trên máy tính (Chrome)
+
+Mỗi máy chỉ cần cài một lần, sau đó script tự chạy và tự cập nhật.
+
+**Bước 1.** Cài **Tampermonkey** từ [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo), bấm **Thêm vào Chrome**.
+
+<img src="docs/images/chrome-01-web-store.png" width="560" alt="Trang Tampermonkey trên Chrome Web Store, nút Thêm vào Chrome">
+
+**Bước 2.** Mở `chrome://extensions` → **Tampermonkey** → **Chi tiết**, bật **Cho phép tập lệnh của người dùng** (*Allow User Scripts*, Chrome 138 trở lên). Với Chrome cũ hơn, bật **Chế độ dành cho nhà phát triển** ở góc phải trên trang `chrome://extensions`. Không bật thì script không chạy.
+
+<img src="docs/images/chrome-02-allow-user-scripts.png" width="560" alt="Trang chi tiết Tampermonkey có công tắc Cho phép tập lệnh của người dùng">
+
+**Bước 3.** Mở từng link cài đặt ở trên bằng Chrome. Trang Tampermonkey hiện ra, bấm **Cài đặt**. Muốn cài thêm script khác, làm lại bước này với link của script đó.
+
+<img src="docs/images/chrome-03-install-page.png" width="560" alt="Trang cài script của Tampermonkey có nút Cài đặt">
+
+**Bước 4.** Mở **motchilltu.com** và xem phim. Muốn kiểm tra: mở **Tampermonkey** → **Bảng tổng quan**; các script đã cài phải đang bật.
+
+<img src="docs/images/chrome-04-scripts-enabled.png" width="560" alt="Bảng điều khiển Tampermonkey liệt kê 3 script đã bật">
+
+Trên máy tính dùng chuột: **nháy đúp** bên trái hoặc bên phải khung phim để tua 10 giây, **giữ chuột** để xem nhanh x2.
+
+---
+
 ## Cập nhật
 
 **Android:** Tampermonkey tự kiểm tra bản mới định kỳ và tự cập nhật, bạn không cần làm gì.
@@ -92,9 +116,12 @@ Muốn cập nhật ngay: mở lại link cài đặt của script. Trang hiện
 
 **iPhone:** mở lại link cài đặt trong Safari và cài lại.
 
+**Máy tính (Chrome):** Tampermonkey tự cập nhật giống Android. Muốn cập nhật ngay: mở lại link cài đặt và bấm **Cập nhật**. Xem bản đang cài ở cột **Phiên bản** trong **Bảng tổng quan**.
+
 ## Gỡ cài đặt
 
 - **Android:** Firefox → **⋮** → **Tiện ích** → **Tampermonkey** → **Bảng tổng quan**, bấm biểu tượng thùng rác ở dòng của script muốn gỡ.
+- **Máy tính (Chrome):** bấm biểu tượng Tampermonkey trên thanh công cụ → **Bảng tổng quan**, bấm biểu tượng thùng rác ở dòng của script muốn gỡ.
 - **iPhone:** mở ứng dụng **Userscripts** hoặc thư mục **Userscripts** trong ứng dụng **Tệp**, xóa file `motchill-noads.user.js`.
 
 Lưu ý: gỡ script **Lịch sử xem** thì danh sách phim đang xem dở cũng mất theo.

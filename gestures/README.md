@@ -1,14 +1,14 @@
 # Thao tác trình phát
 
-Tên khi cài: *Motchill - thao tác trình phát* (phiên bản 1.4).
+Tên khi cài: *Motchill - thao tác trình phát* (phiên bản 1.5).
 
 Thêm cử chỉ cho trình phát phim trên **motchilltu.com**: chạm 2 lần để tua 10 giây, giữ ngón tay để xem nhanh x2, khóa màn hình khi xem toàn màn hình để lỡ chạm cũng không dừng phim, nút bỏ qua giới thiệu và nút tập tiếp theo.
 
 ## Dùng được trên
 
-| Android (Firefox) | iPhone, iPad |
-| :---: | :---: |
-| Có | Không |
+| Android (Firefox) | iPhone, iPad | Máy tính (Chrome) |
+| :---: | :---: | :---: |
+| Có | Không | Có |
 
 Trên iPhone, khi xem toàn màn hình, máy chuyển sang trình phát riêng của Apple, nên các cử chỉ này không hoạt động. Vì vậy không cần cài script này trên iPhone.
 
@@ -22,7 +22,7 @@ Link cài đặt:
 https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/gestures/motchill-gestures.user.js
 ```
 
-Các bước cài từng bước trên Android có trong [hướng dẫn chung](../README.md).
+Các bước cài trên Android và máy tính có trong [hướng dẫn chung](../README.md).
 
 ## Cách dùng
 
@@ -64,10 +64,13 @@ Một nút nhỏ nền mờ hiện ở góc phải, ngay trên thanh thời gian
 - **Bỏ qua giới thiệu**: hiện từ đầu phim tới 1:25. Bấm là tua tới 1:30.
 - **Tập tiếp theo**: hiện trong 3 phút cuối, nếu còn tập sau. Bấm là mở tập kế tiếp.
 
+Đang xem toàn màn hình thì sang tập sau vẫn ở toàn màn hình, kể cả khi hết tập tự chuyển.
+
 Nút vẫn hiện khi thanh điều khiển đã ẩn, nên chỉ cần chạm 1 lần. Khi màn hình đang khóa, chỉ còn nút **Tập tiếp theo**.
 
 ## Lưu ý
 
 - Không tua được, không xem x2 được: kiểm tra bạn đang chọn server **VIP #1**.
 - Không thấy ổ khóa: ổ khóa chỉ có khi xem toàn màn hình. Chạm 1 lần vào phim để hiện.
+- Thoát app hoặc cửa sổ nhỏ (PiP) có thể làm trình duyệt thoát toàn màn hình. Khi quay lại, chạm 1 lần vào phim để xem toàn màn hình tiếp; trình duyệt không cho trang tự bật lại khi chưa chạm.
 - Script chỉ chạy trên motchilltu.com. Nếu trang đổi sang tên miền khác, cần chờ bản cập nhật.
