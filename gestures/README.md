@@ -1,6 +1,6 @@
 # Thao tác trình phát
 
-Tên khi cài: *Motchill - thao tác trình phát* (phiên bản 1.5.1).
+Tên khi cài: *Motchill - thao tác trình phát* (phiên bản 1.6).
 
 Thêm cử chỉ cho trình phát phim trên **Motchill** (motchillsa.com): chạm 2 lần để tua 10 giây, giữ ngón tay để xem nhanh x2, khóa màn hình khi xem toàn màn hình để lỡ chạm cũng không dừng phim, nút bỏ qua giới thiệu và nút tập tiếp theo.
 
@@ -61,8 +61,10 @@ Khi đã khóa:
 
 Một nút nhỏ nền mờ hiện ở góc phải, ngay trên thanh thời gian:
 
-- **Bỏ qua giới thiệu**: hiện từ đầu phim tới 1:25. Bấm là tua tới 1:30.
-- **Tập tiếp theo**: hiện trong 3 phút cuối, nếu còn tập sau. Bấm là mở tập kế tiếp.
+- **Bỏ qua giới thiệu**: ban đầu hiện từ đầu phim tới 1:25, bấm là tua tới 1:30. Nếu sau khi bấm bạn tua chỉnh trong 15 giây, script sẽ nhớ chỗ hết giới thiệu của phim đó cho các tập sau. Chỉ dùng cho phim có giới thiệu ở đầu tập.
+- **Tập tiếp theo**: ban đầu hiện trong 3 phút cuối, nếu còn tập sau. Bấm là mở tập kế tiếp và nhớ đoạn cuối phim còn dài bao lâu. Script lấy mốc giữa 5 lần gần nhất; ở các tập sau, nút hiện sớm hơn mốc đó 30 giây.
+
+Trong menu ☰ (điện thoại) và ngay dưới khung phim, cạnh khung **Đổi server**, có mục **TỰ CHUYỂN TẬP** (mặc định tắt). Khi bật và đã nhớ đoạn cuối, tới cuối phim nút sẽ đếm ngược 5 giây rồi sang tập; chạm vào nút để ở lại tập này. Dữ liệu đã nhớ lưu trên từng máy, xóa dữ liệu trang thì sẽ mất.
 
 Đang xem toàn màn hình thì sang tập sau vẫn ở toàn màn hình, kể cả khi hết tập tự chuyển.
 

@@ -1,6 +1,6 @@
 # Lịch sử xem
 
-Tên khi cài: *Motchill - lịch sử xem* (phiên bản 1.8).
+Tên khi cài: *Motchill - lịch sử xem* (phiên bản 1.9).
 
 Nhớ chỗ bạn đang xem dở ở từng phim trên **Motchill** (motchillsa.com). Mở lại tập đó là phim tự tua tới chỗ cũ và chạy tiếp. Trang chủ có thêm hàng **Đang xem dở** để vào lại phim nhanh.
 

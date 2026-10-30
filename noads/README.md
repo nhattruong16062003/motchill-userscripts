@@ -1,6 +1,6 @@
 # Chặn quảng cáo + tối ưu mạng
 
-Tên khi cài: *Motchill - chặn quảng cáo + tối ưu mạng* (phiên bản 4.4).
+Tên khi cài: *Motchill - chặn quảng cáo + tối ưu mạng* (phiên bản 4.5).
 
 Xem phim trên **Motchill** không còn quảng cáo, cả bản trang **motchillsa.com** (trước là motchilltu.com) lẫn **motchilln.fm** (trước là motchillt.app). Script tự chạy, bạn không cần bấm gì.
 
@@ -41,3 +41,4 @@ Trang xem phim sau khi cài:
 - Một số phim có dòng quảng cáo nằm sẵn trong hình, ví dụ "Bộ phim này do ... tài trợ". Dòng đó là một phần của video nên không xóa được.
 - Quảng cáo vẫn hiện: kiểm tra bạn đang mở bằng Firefox (Android) hoặc Safari (iPhone), không phải tab riêng tư, rồi tải lại trang.
 - Script chạy trên mọi tên miền có chữ *motchill*, nên trang đổi tên miền vẫn có tác dụng.
+- Muốn để trang phát quảng cáo video như bình thường (vẫn chặn banner, popup): mở **Tampermonkey** → **Bảng tổng quan**, bấm biểu tượng cây bút ở dòng của script, đổi `BLOCK_VIDEO_ADS = true` thành `false` rồi lưu. Lần script tự cập nhật sau có thể ghi đè thay đổi này, khi đó sửa lại.
