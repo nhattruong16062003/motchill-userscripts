@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Motchill - lịch sử xem
 // @namespace    motchill-history
-// @version      1.8
+// @version      1.9
 // @author       zic
 // @homepageURL  https://github.com/nhattruong16062003/motchill-userscripts/tree/main/history
 // @updateURL    https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/history/motchill-history.user.js
@@ -24,8 +24,8 @@
   const MAX_SHOWS = 20;            // Giữ tối đa 20 phim gần nhất.
   const SAVE_EVERY_MS = 5000;      // Đang xem: lưu vị trí 5 giây một lần.
   const MIN_RESUME_SECONDS = 10;   // Chưa xem quá 10 giây thì không tua lại.
-  const FINISHED_RATIO = 0.95;
-  const MIN_EPISODE_SECONDS = 120; // Video ngắn hơn 2 phút (video giả lúc đổi server...) không phải tập phim.     // Xem quá 95% tập = xem xong.
+  const FINISHED_RATIO = 0.95;     // Xem quá 95% tập = xem xong.
+  const MIN_EPISODE_SECONDS = 120; // Video ngắn hơn 2 phút (video giả lúc đổi server...) không phải tập phim.
   const STORE_KEY = 'history';
 
   // Lịch sử nằm trong kho riêng của Tampermonkey / Userscripts (GM.getValue / GM.setValue),
@@ -161,8 +161,11 @@
 
     // Trình phát tải thông tin phim ngay khi mở trang: lúc đó tua về chỗ cũ và cho phim chạy luôn,
     // không cần bấm Play hay chọn gì.
+    // Quảng cáo video của trang chạy trong cùng thẻ <video>: không coi là phim.
+    const playingAd = () => !!video.closest('.jw-flag-ads');
+
     function start() {
-      if (ready || !isActive()) return;
+      if (ready || !isActive() || playingAd()) return;
       const duration = Number.isFinite(video.duration) ? video.duration : 0;
       if (duration && duration < MIN_EPISODE_SECONDS) return; // Video giả: đợi phim thật nạp vào.
       ready = true;
@@ -173,7 +176,7 @@
     }
 
     function save() {
-      if (!ready || !isActive()) return;
+      if (!ready || !isActive() || playingAd()) return;
       const duration = Number.isFinite(video.duration) ? video.duration : 0;
       const position = video.currentTime || 0;
       // Lỡ tua qua đoạn cuối rồi tua ngược lại: tính là đang xem tiếp, không phải đã xem xong.
@@ -203,7 +206,7 @@
     // Trang gỡ video cũ khi đổi server cũng làm video phát 'ended': chỉ tin khi đã thật sự tới gần cuối.
     video.addEventListener('ended', () => {
       const duration = video.duration;
-      if (!finished && Number.isFinite(duration) && duration >= MIN_EPISODE_SECONDS && video.currentTime >= duration * FINISHED_RATIO) {
+      if (!finished && !playingAd() && Number.isFinite(duration) && duration >= MIN_EPISODE_SECONDS && video.currentTime >= duration * FINISHED_RATIO) {
         markFinished();
       }
     });
@@ -428,14 +431,6 @@
   // ============================================================
   //  TIỆN ÍCH CHUNG
   // ============================================================
-  function formatTime(seconds) {
-    const s = Math.floor(seconds);
-    const h = Math.floor(s / 3600);
-    const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
-    const ss = String(s % 60).padStart(2, '0');
-    return h ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
-  }
-
   function escapeHtml(text) {
     return String(text).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   }

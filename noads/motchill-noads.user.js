@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Motchill - chặn quảng cáo + tối ưu mạng
 // @namespace    motchill-noads
-// @version      4.4
+// @version      4.5
 // @author       zic
 // @homepageURL  https://github.com/nhattruong16062003/motchill-userscripts/tree/main/noads
 // @updateURL    https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/noads/motchill-noads.user.js
@@ -28,6 +28,10 @@
   // false = để nguyên cơ chế P2P (chia sẻ qua lại giữa người xem) của trang.
   const DISABLE_P2P = true;
 
+  // true  = bỏ quảng cáo video trước phim trong trình phát.
+  // false = để trang phát quảng cáo video như bình thường (vẫn chặn banner, popup).
+  const BLOCK_VIDEO_ADS = true;
+
   // Mốc thời gian ở tương lai xa: trang tưởng quảng cáo "vừa hiện xong" nên không hiện nữa.
   const FUTURE = '9999999999999';
 
@@ -38,7 +42,7 @@
   // và bản Next.js (motchillt.app -> motchilln.fm...). Lúc script chạy trang chưa tải nên chưa biết là bản nào;
   // hai bộ chặn không đụng nhau nên chạy cả hai.
   blockMotchilltu();
-  disableVideoAds();
+  if (BLOCK_VIDEO_ADS) disableVideoAds();
   if (DISABLE_P2P) disableP2P();
   blockMotchillt();
 

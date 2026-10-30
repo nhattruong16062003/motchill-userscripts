@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Motchill - thao tác trình phát
 // @namespace    motchill-gestures
-// @version      1.5.1
+// @version      1.6
 // @author       zic
 // @homepageURL  https://github.com/nhattruong16062003/motchill-userscripts/tree/main/gestures
 // @updateURL    https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/gestures/motchill-gestures.user.js
@@ -26,7 +26,7 @@
   //   - Giữ ngón tay: tốc độ x2, thả ra trở lại như cũ
   //   - Ổ khóa nhỏ ở mép trái, chỉ hiện khi phóng to. Khi khóa: chỉ còn tua
   //     10 giây và giữ x2; muốn dừng hay thu nhỏ phải mở khóa trước.
-  //   - Đầu phim: nút "Bỏ qua giới thiệu" (tới 1:30). 3 phút cuối: nút "Tập tiếp theo".
+  //   - Đầu phim: bỏ qua giới thiệu. Cuối phim: tập tiếp theo và tự chuyển nếu bật.
   //
   //  Cách JW Player nghe thao tác chạm trên Android (đã đọc mã của nó):
   //   - Mỗi lần chạm nó tự nhận touchstart/touchend; 2 lần touchend cách nhau
@@ -40,9 +40,87 @@
     const DOUBLE_TAP_MS = 300;
     const LOCK_ICON_SHOW_MS = 2500;
     const TIP_SHOW_MS = 700;
-    const INTRO_SECONDS = 90;        // Bỏ qua giới thiệu = tua tới 1:30.
-    const NEXT_SHOW_SECONDS = 180;   // Nút tập tiếp theo hiện trong 3 phút cuối.
+    const INTRO_SECONDS = 90;        // Mốc mặc định khi chưa học giới thiệu.
+    const NEXT_SHOW_SECONDS = 180;   // Mốc mặc định khi chưa học đoạn cuối.
     const MIN_EPISODE_SECONDS = 600; // Không hiện nút với video ngắn (video giả lúc đổi server...).
+
+    const slug = () => location.pathname.match(/^\/xem-phim\/([^/]+)/)?.[1];
+    function readMarks() {
+      try {
+        const marks = JSON.parse(localStorage.getItem('mc-marks') || '{}');
+        return marks && typeof marks === 'object' && !Array.isArray(marks) ? marks : {};
+      } catch (e) { return {}; }
+    }
+    function filmMarks() {
+      const mark = readMarks()[slug()];
+      return mark && typeof mark === 'object' && !Array.isArray(mark) ? mark : {};
+    }
+    function saveMark(key, value) {
+      const film = slug();
+      if (!film) return;
+      try {
+        const marks = readMarks();
+        const previous = marks[film];
+        marks[film] = { ...(previous && typeof previous === 'object' && !Array.isArray(previous) ? previous : {}), [key]: value };
+        localStorage.setItem('mc-marks', JSON.stringify(marks));
+      } catch (e) { /* Bộ nhớ trang có thể bị chặn. */ }
+    }
+    const introEnd = () => {
+      const value = filmMarks().intro;
+      return Number.isFinite(value) && value >= 10 && value <= 300 ? value : INTRO_SECONDS;
+    };
+    const samples = () => {
+      const values = filmMarks().outro;
+      return Array.isArray(values) ? values.filter((n) => Number.isFinite(n) && n > 0 && n <= 300).slice(-5) : [];
+    };
+    const median = (values) => {
+      const sorted = [...values].sort((a, b) => a - b);
+      const middle = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+    };
+    const margin = (values) => Math.max(5, Math.min(30, (Math.max(...values) - Math.min(...values)) / 2));
+    const clock = (seconds) => `${Math.floor(Math.round(seconds) / 60)}:${String(Math.round(seconds) % 60).padStart(2, '0')}`;
+
+    function autoNextOn() {
+      try { return localStorage.getItem('mc-auto-next') === '1'; }
+      catch (e) { return false; }
+    }
+    function addAutoNextMenu() {
+      // Menu ☰ của điện thoại. Thanh menu máy tính đã hết chỗ (thêm mục là bị xuống dòng).
+      document.querySelectorAll('.phoneContent li > a[href="/danh-sach/tv-shows/"]').forEach((link) => {
+        const item = link.parentElement;
+        if (item.parentElement.querySelector('a.mc-auto-next')) return;
+        const copy = item.cloneNode(false);
+        copy.innerHTML = '<a class="mc-auto-next" role="button" href="#"></a>';
+        const historyItem = item.nextElementSibling;
+        (historyItem && historyItem.querySelector('a[href="/?lich-su#dang-xem-do"]') ? historyItem : item).after(copy);
+      });
+      // Cạnh khung "Đổi server" dưới trình phát (mọi màn hình), cùng kiểu khung của trang.
+      const servers = document.querySelector('.tip-change-server');
+      if (servers && !document.querySelector('.mc-auto-next-box')) {
+        servers.insertAdjacentHTML('afterend', `<div class="film-note mc-auto-next-box" style="${servers.getAttribute('style') || ''}">`
+          + '<a class="mc-auto-next" role="button" href="#" style="color:#e8a568">'
+          + '</a></div>');
+      }
+      document.querySelectorAll('a.mc-auto-next').forEach((link) => {
+        link.textContent = `TỰ CHUYỂN TẬP: ${autoNextOn() ? 'BẬT' : 'TẮT'}`;
+      });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addAutoNextMenu);
+    else addAutoNextMenu();
+    // Bắt ở pha capture: giao diện trang (jQuery) tự chuyển tới href của mục menu, preventDefault không cản được.
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest && e.target.closest('a.mc-auto-next');
+      if (!link) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      try {
+        if (autoNextOn()) localStorage.removeItem('mc-auto-next');
+        else localStorage.setItem('mc-auto-next', '1');
+      } catch (error) { /* Bộ nhớ trang có thể bị chặn. */ }
+      addAutoNextMenu();
+      link.blur();
+    }, true);
 
     // ---- Biểu tượng (SVG nét mảnh, màu theo chữ) ----
     const svg = (paths, size = 16) =>
@@ -258,6 +336,93 @@
       return next ? next.href : null;
     }
 
+    // Trang ghi đè window.fetch nên dùng chung XHR cho tải trước và chuyển tập.
+    function loadEpisode(url) {
+      return new Promise((resolve, reject) => {
+        try {
+          const xhr = new XMLHttpRequest();
+          xhr.responseType = 'document';
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300 && xhr.responseXML) resolve(xhr.responseXML);
+            else reject(new Error('Không tải được tập'));
+          };
+          xhr.onerror = xhr.onabort = xhr.ontimeout = () => reject(new Error('Không tải được tập'));
+          xhr.open('GET', url);
+          xhr.timeout = 15000;
+          xhr.send();
+        } catch (e) { reject(e); }
+      });
+    }
+
+    let activePlayer = null;
+    let activeVideo = null;
+    let activePath = '';
+    let introTimer = null;
+    let lastIntroSeek = null;
+    let skipSeek = null;
+    let countdownTimer = null;
+    let countdown = 0;
+    let staying = false;
+    let prefetched = null;
+    let prefetchStarted = false;
+    let awaitingVideo = false;
+    let awaitingSince = 0;
+    let outroLearned = false;
+    // Lúc người xem chạm / bấm phím gần nhất: chỉ học các cú tua do người xem (lịch sử cũng tự tua về chỗ cũ).
+    let lastInputAt = 0;
+    for (const type of ['pointerdown', 'pointerup', 'keydown']) {
+      addEventListener(type, () => { lastInputAt = Date.now(); }, true);
+    }
+
+    function stopCountdown() {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+      countdown = 0;
+    }
+
+    function resetEpisode() {
+      clearTimeout(introTimer);
+      introTimer = null;
+      lastIntroSeek = null;
+      skipSeek = null;
+      stopCountdown();
+      staying = false;
+      prefetched = null;
+      prefetchStarted = false;
+      outroLearned = false;
+      if (activeVideo) activeVideo.removeEventListener('seeking', learnIntro);
+    }
+
+    function learnIntro() {
+      if (!introTimer || this !== activeVideo) return;
+      if (skipSeek !== null) {
+        const ownSeek = Math.abs(this.currentTime - skipSeek) < 0.5;
+        skipSeek = null;
+        if (ownSeek) return;
+      }
+      if (Date.now() - lastInputAt > 2000) return;
+      lastIntroSeek = this.currentTime;
+    }
+
+    function syncEpisode(player) {
+      const video = videoOf(player);
+      if (activePlayer === player && activeVideo === video && activePath === location.pathname) return;
+      const newPlayer = activePlayer !== player;
+      const loadedNewVideo = awaitingVideo && video && activeVideo !== video && video.readyState >= 1;
+      resetEpisode();
+      activePlayer = player;
+      activeVideo = video;
+      activePath = location.pathname;
+      if (video) video.addEventListener('seeking', learnIntro);
+      const button = player.querySelector(':scope > .mc-action');
+      if (button) {
+        button.dataset.action = '';
+        button.dataset.countdown = '';
+        button.innerHTML = '';
+      }
+      if (newPlayer || loadedNewVideo) awaitingVideo = false;
+    }
+
     let goingNext = false;
     function goNext(player) {
       const next = nextEpisodeLink();
@@ -269,52 +434,47 @@
       }
 
       goingNext = true;
-      try {
-        const xhr = new XMLHttpRequest();
-        // Trang ghi đè window.fetch nên phải dùng XHR.
-        xhr.responseType = 'document';
-        xhr.onload = () => {
-          try {
-            if (xhr.status < 200 || xhr.status >= 300 || !xhr.responseXML) throw new Error('Không tải được tập');
-            const doc = xhr.responseXML;
-            const servers = [...doc.querySelectorAll('.tip-change-server .streaming-server')];
-            const currentServers = [...document.querySelectorAll('.tip-change-server .streaming-server')];
-            const index = currentServers.findIndex((button) => button.classList.contains('btn-success'));
-            const playable = (button) => button && /^(m3u8|mp4)$/.test(button.dataset.type) && button.dataset.link;
-            const server = index >= 0 && playable(servers[index]) ? servers[index] : servers.find(playable);
-            const tip = document.querySelector('.tip-change-server');
-            const nextTip = doc.querySelector('.tip-change-server');
-            if (!server || !tip || !nextTip || !window.jwplayer) throw new Error('Không có server');
-            const jw = jwplayer(player.id);
-            if (!jw || !jw.load || !jw.play) throw new Error('Không có trình phát');
+      const ready = prefetched && prefetched.url === url ? prefetched.promise : Promise.resolve(null);
+      ready.then((cached) => cached || loadEpisode(url)).then((doc) => {
+        try {
+          const servers = [...doc.querySelectorAll('.tip-change-server .streaming-server')];
+          const currentServers = [...document.querySelectorAll('.tip-change-server .streaming-server')];
+          const index = currentServers.findIndex((button) => button.classList.contains('btn-success'));
+          const playable = (button) => button && /^(m3u8|mp4)$/.test(button.dataset.type) && button.dataset.link;
+          const server = index >= 0 && playable(servers[index]) ? servers[index] : servers.find(playable);
+          const tip = document.querySelector('.tip-change-server');
+          const nextTip = doc.querySelector('.tip-change-server');
+          if (!server || !tip || !nextTip || !window.jwplayer) throw new Error('Không có server');
+          const jw = jwplayer(player.id);
+          if (!jw || !jw.load || !jw.play) throw new Error('Không có trình phát');
 
-            jw.load([{ file: server.dataset.link.replace(/^http:\/\//i, 'https://'), image: jw.getPlaylistItem().image }]);
-            jw.play();
-            history.pushState(null, '', url);
-            document.title = doc.title;
-            document.querySelector('.list-episode a.current').classList.remove('current');
-            next.classList.add('current');
-            tip.innerHTML = nextTip.innerHTML;
-            tip.querySelectorAll('.streaming-server.btn-success').forEach((button) => button.classList.remove('btn-success'));
-            tip.querySelectorAll('.streaming-server')[servers.indexOf(server)].classList.add('btn-success');
-            for (const selector of ['.breadcrumbs li.active', '.chapter-name']) {
-              const currentLabel = document.querySelector(selector);
-              const nextLabel = doc.querySelector(selector);
-              if (currentLabel && nextLabel) currentLabel.textContent = nextLabel.textContent;
-            }
-            addEventListener('popstate', () => location.reload(), { once: true });
-            goingNext = false;
-          } catch (e) {
-            location.href = url;
+          resetEpisode();
+          awaitingVideo = true;
+          awaitingSince = Date.now();
+          jw.load([{ file: server.dataset.link.replace(/^http:\/\//i, 'https://'), image: jw.getPlaylistItem().image }]);
+          jw.play();
+          history.pushState(null, '', url);
+          document.title = doc.title;
+          document.querySelector('.list-episode a.current').classList.remove('current');
+          next.classList.add('current');
+          tip.innerHTML = nextTip.innerHTML;
+          tip.querySelectorAll('.streaming-server.btn-success').forEach((button) => button.classList.remove('btn-success'));
+          tip.querySelectorAll('.streaming-server')[servers.indexOf(server)].classList.add('btn-success');
+          for (const selector of ['.breadcrumbs li.active', '.chapter-name']) {
+            const currentLabel = document.querySelector(selector);
+            const nextLabel = doc.querySelector(selector);
+            if (currentLabel && nextLabel) currentLabel.textContent = nextLabel.textContent;
           }
-        };
-        xhr.onerror = xhr.onabort = xhr.ontimeout = () => { location.href = url; };
-        xhr.open('GET', url);
-        xhr.timeout = 15000;
-        xhr.send();
-      } catch (e) {
-        location.href = url;
-      }
+          addEventListener('popstate', () => location.reload(), { once: true });
+          activePath = location.pathname;
+          if (activeVideo) activeVideo.addEventListener('seeking', learnIntro);
+          goingNext = false;
+          // Đổi nút ngay (không đợi lần kiểm tra 500 ms): chạm 2 lần vội không nhảy thêm một tập.
+          updateAction(player);
+        } catch (e) {
+          location.href = url;
+        }
+      }).catch(() => { location.href = url; });
     }
 
     function updateAction(player) {
@@ -323,31 +483,103 @@
       if (!video || !button) return;
       const time = video.currentTime;
       const duration = Number.isFinite(video.duration) ? video.duration : 0;
+      const outro = samples();
+      const standard = outro.length ? median(outro) : NEXT_SHOW_SECONDS;
+      const remaining = duration - time;
 
-      let action = '';
-      if (duration >= MIN_EPISODE_SECONDS) {
-        if (time > 0 && time < INTRO_SECONDS - 5) action = 'intro';
-        else if (duration - time < NEXT_SHOW_SECONDS && nextEpisodeUrl()) action = 'next';
+      // Nút nằm ngay trên thanh điều khiển của JW (thanh cao hơn khi toàn màn hình trên máy tính).
+      const bar = player.querySelector('.jw-controlbar');
+      const bottom = `${Math.max(64, bar ? bar.offsetHeight + 4 : 0)}px`;
+      if (button.style.bottom !== bottom) button.style.bottom = bottom;
+
+      // Tập mới không nạp được thì thôi chờ, để nút hoạt động lại.
+      if (awaitingVideo && Date.now() - awaitingSince > 15000) awaitingVideo = false;
+      let action = awaitingVideo ? 'loading' : '';
+      if (!awaitingVideo && duration >= MIN_EPISODE_SECONDS) {
+        if (time > 0 && time < introEnd() - 5) action = 'intro';
+        else if (remaining < Math.min(300, standard + (outro.length ? 30 : 0)) && nextEpisodeUrl()) action = 'next';
       }
-      if (button.dataset.action === action) return;
+      const autoZone = action === 'next' && outro.length && autoNextOn()
+        && remaining > 0 && remaining <= standard - margin(outro) && !video.paused;
+      if (countdownTimer && !autoZone) stopCountdown();
+      if (autoZone && !goingNext && !staying && !countdownTimer) {
+        countdown = 5;
+        countdownTimer = setInterval(() => {
+          updateAction(player);
+          if (!countdownTimer) return;
+          countdown--;
+          if (!countdown) {
+            stopCountdown();
+            goNext(player);
+          } else updateAction(player);
+        }, 1000);
+      }
+      // Chỉ tải trước khi đang toàn màn hình (màn nhỏ chuyển trang bình thường, không dùng tới).
+      if (action === 'next' && !prefetchStarted && isFullscreen(player)) {
+        prefetchStarted = true;
+        const url = nextEpisodeUrl();
+        prefetched = { url, promise: loadEpisode(url).catch(() => null) };
+      }
+      const label = action === 'loading' ? 'Đang chuyển tập…'
+        : action === 'intro' ? `Bỏ qua giới thiệu ${ICON.forward}`
+        : action === 'next' ? countdownTimer
+          ? `Sang tập sau sau ${countdown} giây · Chạm để ở lại ${ICON.next}`
+          : `Tập tiếp theo ${ICON.next}` : '';
+      const count = countdownTimer ? String(countdown) : '';
+      if (button.dataset.action === action && button.dataset.countdown === count) return;
       button.dataset.action = action;
-      button.innerHTML = action === 'intro' ? `Bỏ qua giới thiệu ${ICON.forward}`
-        : action === 'next' ? `Tập tiếp theo ${ICON.next}` : '';
+      button.dataset.countdown = count;
+      button.innerHTML = label;
     }
 
     function runAction(player, button) {
       const video = videoOf(player);
-      if (button.dataset.action === 'intro' && video) video.currentTime = INTRO_SECONDS;
-      if (button.dataset.action === 'next') goNext(player);
+      if (button.dataset.action === 'intro' && video) {
+        clearTimeout(introTimer);
+        lastIntroSeek = null;
+        skipSeek = introEnd();
+        video.currentTime = skipSeek;
+        introTimer = setTimeout(() => {
+          introTimer = null;
+          if (lastIntroSeek >= 10 && lastIntroSeek <= 300) {
+            const end = Math.round(lastIntroSeek);
+            saveMark('intro', end);
+            showTip(player, `Đã nhớ: hết giới thiệu ở ${clock(end)}`, '50%', '50%', '', false, 2500);
+          }
+          lastIntroSeek = null;
+        }, 15000);
+      }
+      if (button.dataset.action === 'next') {
+        if (countdownTimer) {
+          stopCountdown();
+          staying = true;
+        } else {
+          if (!outroLearned && video && Number.isFinite(video.duration) && video.duration >= MIN_EPISODE_SECONDS) {
+            const left = video.duration - video.currentTime;
+            if (left > 0 && left <= 300) {
+              outroLearned = true; // Bấm nhiều lần lúc đang chuyển tập chỉ tính 1 lần.
+              const updated = [...samples(), Math.max(1, Math.round(left))].slice(-5);
+              saveMark('outro', updated);
+              const standard = median(updated);
+              showTip(player, `Đã nhớ đoạn cuối ${clock(standard)} (${updated.length} tập) · nút hiện lúc còn ${clock(Math.min(300, standard + 30))}`, '50%', '50%', '', false, 2500);
+            }
+          }
+          goNext(player);
+        }
+      }
       updateAction(player);
     }
 
     // Trang tạo lại trình phát khi đổi server -> kiểm tra định kỳ.
     // Đồng thời: thoát phóng to (kể cả bằng nút Back) thì tự mở khóa.
+    addEventListener('loadedmetadata', (e) => {
+      if (awaitingVideo && playerOf(e.target) === activePlayer) awaitingVideo = false;
+    }, true);
     setInterval(() => {
       if (restorePlayer && !restorePlayer.isConnected) clearRestore();
       document.querySelectorAll('.jwplayer').forEach((player) => {
         ensureUI(player);
+        syncEpisode(player);
         updateAction(player);
         if (isLocked(player) && !isFullscreen(player)) unlock(player);
         if (player.dataset.mcNext || !window.jwplayer) return;
@@ -386,7 +618,7 @@
     let tipTimer = null;
 
     // kind = class hiệu ứng: 'mc-fast' (2x), 'mc-skip mc-forward' / 'mc-skip mc-back' (tua).
-    function showTip(player, html, left, top, kind, keep) {
+    function showTip(player, html, left, top, kind, keep, duration = TIP_SHOW_MS) {
       const tip = player.querySelector('.mc-tip');
       if (!tip) return;
       tip.innerHTML = html;
@@ -397,7 +629,7 @@
       void tip.offsetWidth;
       tip.classList.add('mc-on');
       clearTimeout(tipTimer);
-      if (!keep) tipTimer = setTimeout(() => tip.classList.remove('mc-on'), TIP_SHOW_MS);
+      if (!keep) tipTimer = setTimeout(() => tip.classList.remove('mc-on'), duration);
     }
 
     function hideTip(player) {
