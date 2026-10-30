@@ -1,14 +1,17 @@
 // ==UserScript==
 // @name         Motchill - chặn quảng cáo + tối ưu mạng
 // @namespace    motchill-noads
-// @version      4.3
+// @version      4.4
 // @author       zic
 // @homepageURL  https://github.com/nhattruong16062003/motchill-userscripts/tree/main/noads
 // @updateURL    https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/noads/motchill-noads.user.js
 // @downloadURL  https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/noads/motchill-noads.user.js
-// @description  Chặn quảng cáo trên motchilltu.com / motchillt.app và tắt chia sẻ P2P để phim chỉ tải từ máy chủ.
+// @description  Chặn quảng cáo trên Motchill (mọi tên miền, cả bản WordPress lẫn bản Next.js) và tắt chia sẻ P2P để phim chỉ tải từ máy chủ.
+// @match        https://motchillsa.com/*
 // @match        https://motchilltu.com/*
+// @match        https://motchilln.fm/*
 // @match        https://motchillt.app/*
+// @include      /^https?:\/\/[^\/?#]*motchill[^\/?#]*\//
 // @run-at       document-start
 // @inject-into  page
 // @grant        none
@@ -31,15 +34,13 @@
   // ============================================================
   //  CHỌN VIỆC THEO TỪNG TRANG
   // ============================================================
-  const host = location.hostname;
-
-  if (host === 'motchilltu.com') {
-    blockMotchilltu();
-    disableVideoAds();
-    if (DISABLE_P2P) disableP2P();
-  } else if (host === 'motchillt.app') {
-    blockMotchillt();
-  }
+  // Có 2 trang Motchill khác nhau, đều hay đổi tên miền: bản WordPress (motchilltu.com -> motchillsa.com...)
+  // và bản Next.js (motchillt.app -> motchilln.fm...). Lúc script chạy trang chưa tải nên chưa biết là bản nào;
+  // hai bộ chặn không đụng nhau nên chạy cả hai.
+  blockMotchilltu();
+  disableVideoAds();
+  if (DISABLE_P2P) disableP2P();
+  blockMotchillt();
 
   // Trang gán thư viện JW Player sau khi script chạy: bỏ VAST trước mỗi setup.
   function disableVideoAds() {

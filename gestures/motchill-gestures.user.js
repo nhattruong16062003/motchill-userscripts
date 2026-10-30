@@ -1,13 +1,15 @@
 // ==UserScript==
 // @name         Motchill - thao tác trình phát
 // @namespace    motchill-gestures
-// @version      1.5
+// @version      1.5.1
 // @author       zic
 // @homepageURL  https://github.com/nhattruong16062003/motchill-userscripts/tree/main/gestures
 // @updateURL    https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/gestures/motchill-gestures.user.js
 // @downloadURL  https://raw.githubusercontent.com/nhattruong16062003/motchill-userscripts/main/gestures/motchill-gestures.user.js
-// @description  Trình phát motchilltu.com: chạm 2 lần tua 10 giây, giữ để xem x2, khóa màn hình khi xem toàn màn hình, nút bỏ qua giới thiệu và tập tiếp theo.
+// @description  Trình phát Motchill (mọi tên miền): chạm 2 lần tua 10 giây, giữ để xem x2, khóa màn hình khi xem toàn màn hình, nút bỏ qua giới thiệu và tập tiếp theo.
+// @match        https://motchillsa.com/*
 // @match        https://motchilltu.com/*
+// @include      /^https?:\/\/[^\/?#]*motchill[^\/?#]*\//
 // @run-at       document-start
 // @inject-into  page
 // @grant        none
